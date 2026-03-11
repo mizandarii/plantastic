@@ -1,4 +1,5 @@
 # plantastic
+[![Estonia](https://img.shields.io/badge/Eesti-ET-green)](README.et.md)
 ![freddie-marriage-UcfKYTan-LU-unsplash](https://github.com/user-attachments/assets/eee07940-7fe3-458b-89a5-156a44e7bff1)
 Plantastic is a mobile application designed to help users manage their houseplants. The app provides **watering reminders**, **plant care logs**, a **plant encyclopedia**, and a **community Q&A section**.
 ## Features
