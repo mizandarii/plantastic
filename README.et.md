@@ -1,4 +1,5 @@
 [![English](https://img.shields.io/badge/English-EN-blue)](README.md)
+[![Estonia](https://img.shields.io/badge/Eesti-ET-green)](README.et.md)
 # Plantastic
 
 Plantastic on mobiilirakendus, mis aitab kasutajatel hallata oma toataimi. Rakendus pakub **kastmise meeldetuletusi**, **taimede hoolduslogisid**, **taimede entsüklopeediat** ja **kogukonna küsimusi ja vastuseid**.
