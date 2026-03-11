@@ -1,4 +1,4 @@
-[![English](https://img.shields.io/badge/English-EN-blue)](README_EN.md)
+[![English](https://img.shields.io/badge/English-EN-blue)](README.md)
 Plantasic on mobiilirakendus, mis aitab kasutajatel hallata oma toataimi. Rakendus pakub **kastmise meeldetuletusi**, **taimede hoolduslogisid**, **taimede entsüklopeediat** ja **kogukonna küsimusi ja vastuseid**.
 ![freddie-marriage-UcfKYTan-LU-unsplash](https://github.com/user-attachments/assets/eee07940-7fe3-458b-89a5-156a44e7bff1)
 ## Funktsioonid
