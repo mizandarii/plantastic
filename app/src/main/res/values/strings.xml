@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Plantastic</string>
+
+    <string name="welcome_to_">
+        Welcome \n  to \nPlantastic!
+    </string>
+    <string name="go">Go!</string>
+</resources>

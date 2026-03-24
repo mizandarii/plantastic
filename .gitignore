@@ -1,0 +1,56 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio specific
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+
+# Gradle
+.gradle/
+build/
+
+# Local configuration file (contains path to Android SDK)
+local.properties
+
+# Log Files
+*.log
+
+# Android Studio captures folder
+captures/
+
+# External native build folder
+.externalNativeBuild
+.cxx/
+
+# NDK
+obj/
+
+# Keystore files (NEVER commit these)
+*.jks
+*.keystore
+
+# Google Services (if you add Firebase later)
+google-services.json
+
+# Screenshots
+*.png
+*.jpg
