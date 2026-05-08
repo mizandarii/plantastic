@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title=""
+        />
+    <item
+        android:id="@+id/nav_plants"
+        android:icon="@drawable/ic_flower"
+        android:title=" " />
+    <item
+        android:id="@+id/nav_enc"
+        android:icon="@drawable/ic_book"
+        android:title="" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="" />
+    <item
+        android:id="@+id/nav_fav"
+        android:icon="@drawable/ic_heart"
+        android:title="" />
+</menu>

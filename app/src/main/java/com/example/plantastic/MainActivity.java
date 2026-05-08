@@ -9,83 +9,60 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.example.plantastic.data.PlantasticDatabase;
-import com.example.plantastic.data.entities.KastmisVajadusIntervall;
-import com.example.plantastic.data.entities.Kasutaja;
-import com.example.plantastic.data.entities.Taim;
-import com.example.plantastic.data.entities.TaimLiik;
-import com.example.plantastic.data.entities.TaimSort;
-import com.example.plantastic.data.entities.Teade;
-import com.example.plantastic.data.entities.HooldusTüüp;
-
-import java.util.List;
+import com.example.plantastic.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+    ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        new Thread(() -> {
-            PlantasticDatabase db = PlantasticDatabase.getInstance(this);
+        if (savedInstanceState == null) {
+            replaceFragment(new HomeFragment());
+        }
 
-            // 1. Setup Data
-            Kasutaja user = new Kasutaja();
-            user.kasutajanimi = "Mari";
-            user.teade_start = System.currentTimeMillis();
-            user.teade_aeg = System.currentTimeMillis() + 3600_000;
-            long userId = db.kasutajaDao().insert(user);
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
 
-            TaimLiik liik = new TaimLiik();
-            liik.nimetus = "Sukulent";
-            liik.ladinakeelne_nimetus = "Succulentus";
-            long liikId = db.taimLiikDao().insert(liik);
+            if (id == R.id.nav_home) {
+                replaceFragment(new HomeFragment());
+            } else if (id == R.id.nav_plants) {
+                replaceFragment(new PlantsFragment());
+            } else if (id == R.id.nav_enc) {
+                replaceFragment(new EncyclopediaFragment());
+            } else if (id == R.id.nav_settings) {
+                replaceFragment(new SettingsFragment());
+            } else if (id == R.id.nav_fav) {
+                replaceFragment(new FavoritesFragment());
+            }
 
-            KastmisVajadusIntervall intervall = new KastmisVajadusIntervall();
-            intervall.paevad = 7;
-            long intId = db.kastmisVajadusIntervallDao().insert(intervall);
-
-            TaimSort sort = new TaimSort();
-            sort.nimetus = "Ficus Benjamin";
-            sort.ladinakeelne_nimetus = "Ficus benjamina";
-            sort.liik_id = (int) liikId;
-            sort.kastmisvajadus = (int) intId;
-            long sortId = db.taimSortDao().insert(sort);
-
-            Taim taim = new Taim();
-            taim.nimi = "My Office Ficus";
-            taim.kasutaja_id = (int) userId;
-            taim.sort_id = (int) sortId;
-            long taimId = db.taimDao().insert(taim);
-
-            // 2. Add HooldusTüüp (Missing dependency)
-            HooldusTüüp hooldus = new HooldusTüüp();
-            hooldus.nimetus = "Kastmine";
-            long hooldusId = db.hooldusTüüpDao().insert(hooldus);
-
-            // 3. Add a Notification (Teade)
-            Teade teade = new Teade();
-            teade.taim_id = (int) taimId;
-            teade.hooldusTüüp_id = (int) hooldusId; // Link it!
-            teade.aeg = System.currentTimeMillis() + 86400000;
-            teade.kommentaar = "Time to water the Ficus!";
-            db.teadeDao().insert(teade);
-
-            List<Taim> taimed = db.taimDao().getByUserId((int) userId);
-        }).start();
+            return true;
+        });
     }
 
-    public void goToMain(View view) {
-        Intent intent = new Intent(this, HomeActivity.class);
+    public void goToAddPlant(View view) {
+        Intent intent = new Intent(this, AddPlantFragment.class);
         startActivity(intent);
+    }
+
+    private void replaceFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
+        fragmentTransaction.commit();
     }
 }

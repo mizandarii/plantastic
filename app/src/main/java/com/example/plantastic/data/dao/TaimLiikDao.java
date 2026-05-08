@@ -13,4 +13,7 @@ public interface TaimLiikDao {
 
     @Query("SELECT * FROM taim_liik WHERE id = :id")
     TaimLiik getById(int id);
+
+    @Query("SELECT * FROM taim_liik LIMIT 1")
+    TaimLiik getFirstLiik();
 }

@@ -5,4 +5,8 @@
         Welcome \n  to \nPlantastic!
     </string>
     <string name="go">Go!</string>
+    <string name="add_a_plant">Add a plant</string>
+    <string name="encyclopedia_title">encyclopedia</string>
+    <string name="plant_name">plant name</string>
+    <string name="settings_page">Settings page</string>
 </resources>

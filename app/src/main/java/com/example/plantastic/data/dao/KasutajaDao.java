@@ -8,7 +8,6 @@ import androidx.room.Update;
 
 import com.example.plantastic.data.entities.Kasutaja;
 
-// KasutajaDao.java
 @Dao
 public interface KasutajaDao {
     @Insert
@@ -22,4 +21,7 @@ public interface KasutajaDao {
 
     @Query("SELECT * FROM kasutaja WHERE id = :id")
     Kasutaja getById(int id);
+
+    @Query("SELECT * FROM kasutaja LIMIT 1")
+    Kasutaja getFirstUser();
 }

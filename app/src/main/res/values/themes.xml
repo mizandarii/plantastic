@@ -3,7 +3,16 @@
     <style name="Base.Theme.Plantastic" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:windowBackground">@color/bgcolor</item>
+        <item name="colorSurface">@color/bgcolor</item>
     </style>
+    <style name="App.CustomIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/transparent</item>
+        <item name="android:width">44dp</item>  <!-- Уменьшите ширину -->
+        <item name="android:height">44dp</item> <!-- Уменьшите высоту, чтобы не обрезалось -->
+        <item name="marginHorizontal">4dp</item>
+    </style>
+
 
     <style name="Theme.Plantastic" parent="Base.Theme.Plantastic" />
 </resources>

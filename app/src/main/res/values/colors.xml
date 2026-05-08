@@ -2,5 +2,13 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="daark_green">#243608</color>
+    <color name="btncolor">#74945B</color>
+    <color name="bgcolor">#F6FFC2</color>
+    <color name="text2">#243608</color>
+    <color name="nupp2">#B2B862</color>
+    <color name="tekstEnts">#CED474</color>
+    <color name="transparent">#00FFFFFF</color>
+
 
 </resources>

@@ -13,4 +13,7 @@ public interface KastmisVajadusIntervallDao {
 
     @Query("SELECT * FROM kastmisvajadus_interval WHERE id = :id")
     KastmisVajadusIntervall getById(int id);
+
+    @Query("SELECT * FROM kastmisvajadus_interval LIMIT 1")
+    KastmisVajadusIntervall getFirstInterval();
 }
