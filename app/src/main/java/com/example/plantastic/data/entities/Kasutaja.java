@@ -13,7 +13,7 @@ public class Kasutaja {
     @NonNull
     public String kasutajanimi;
 
-    // Храним время уведомлений как timestamp
+    public boolean teade_on;
     public long teade_start;
     public long teade_aeg;
 }

@@ -5,12 +5,52 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="android:windowBackground">@color/bgcolor</item>
         <item name="colorSurface">@color/bgcolor</item>
+        <item name="materialTimePickerStyle">@style/CustomTimePickerTheme</item>
+        <item name="android:timePickerDialogTheme">@style/CustomTimePickerTheme</item>
     </style>
+
     <style name="App.CustomIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/transparent</item>
-        <item name="android:width">44dp</item>  <!-- Уменьшите ширину -->
-        <item name="android:height">44dp</item> <!-- Уменьшите высоту, чтобы не обрезалось -->
+        <item name="android:width">44dp</item>
+        <item name="android:height">44dp</item>
         <item name="marginHorizontal">4dp</item>
+    </style>
+
+    <!-- Header Style for all screens -->
+    <style name="ScreenHeader" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/abril_fatface_regular</item>
+        <item name="android:textSize">48sp</item>
+        <item name="android:textColor">@color/daark_green</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="plantCardText" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/inter_28pt_medium</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/daark_green</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="CustomTimePickerTheme" parent="Theme.Material3.DayNight.Dialog">
+
+        <item name="colorSurface">@color/daark_green</item>
+        <item name="colorOnSurface">@color/bgcolor</item>
+
+
+        <item name="colorSurfaceVariant">@color/bgcolor</item>
+        <item name="colorOnSurfaceVariant">@color/daark_green</item>
+
+
+        <item name="colorPrimary">@color/daark_green</item>
+        <item name="colorAccent">@color/daark_green</item>
+
+
+        <item name="android:buttonBarPositiveButtonStyle">@style/TimePickerButtonStyle</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/TimePickerButtonStyle</item>
+    </style>
+
+    <style name="TimePickerButtonStyle" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/daark_green</item>
     </style>
 
 

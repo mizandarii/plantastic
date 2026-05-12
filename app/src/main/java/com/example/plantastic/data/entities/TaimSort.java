@@ -11,11 +11,7 @@ import androidx.room.PrimaryKey;
                 @ForeignKey(entity = TaimLiik.class,
                         parentColumns = "id",
                         childColumns = "liik_id",
-                        onDelete = ForeignKey.CASCADE),
-                @ForeignKey(entity = KastmisVajadusIntervall.class,
-                        parentColumns = "id",
-                        childColumns = "kastmisvajadus",
-                        onDelete = ForeignKey.SET_NULL)
+                        onDelete = ForeignKey.CASCADE)
         })
 public class TaimSort {
     @PrimaryKey(autoGenerate = true)
@@ -29,7 +25,7 @@ public class TaimSort {
 
     public int liik_id;
 
-    public int kastmisvajadus; // FK на KastmisvajadusInterval.id
+    public int kastmisvajadus; // Now stores 0-3 intensity directly
 
     public String kirjeldus;
 

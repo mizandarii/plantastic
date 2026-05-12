@@ -27,27 +27,42 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
     @NonNull
     @Override
     public PlantViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.plant_item_fragment, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.my_plant_card, parent, false);
         return new PlantViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull PlantViewHolder holder, int position) {
         PlantResponse.PlantData plant = plants.get(position);
-        holder.commonName.setText(plant.getCommonName());
         
+        // Hide nickname and action buttons for encyclopedia items
+        holder.nickname.setVisibility(View.GONE);
+        holder.dropButton.setVisibility(View.GONE);
+        holder.editButton.setVisibility(View.GONE);
+        holder.deleteButton.setVisibility(View.GONE);
+
+        holder.commonName.setText(plant.getCommonName());
+
         if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
             holder.scientificName.setText(plant.getScientificName().get(0));
+        } else {
+            holder.scientificName.setText("");
         }
 
         if (plant.getDefaultImage() != null) {
             Glide.with(holder.itemView.getContext())
-                .load(plant.getDefaultImage().getThumbnail())
-                .placeholder(R.mipmap.ic_launcher)
-                .into(holder.plantImage);
+                    .load(plant.getDefaultImage().getThumbnail())
+                    .placeholder(R.mipmap.ic_launcher)
+                    .into(holder.plantImage);
+        } else {
+            holder.plantImage.setImageResource(R.mipmap.ic_launcher);
         }
 
-        holder.itemView.setOnClickListener(v -> listener.onPlantClick(plant));
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onPlantClick(plant);
+            }
+        });
     }
 
     @Override
@@ -62,14 +77,22 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
 
     static class PlantViewHolder extends RecyclerView.ViewHolder {
         ImageView plantImage;
+        TextView nickname;
         TextView commonName;
         TextView scientificName;
+        ImageView dropButton;
+        ImageView editButton;
+        ImageView deleteButton;
 
         public PlantViewHolder(@NonNull View itemView) {
             super(itemView);
-            plantImage = itemView.findViewById(R.id.plantImage);
-            commonName = itemView.findViewById(R.id.commonNameText);
-            scientificName = itemView.findViewById(R.id.scientificNameText);
+            plantImage = itemView.findViewById(R.id.selectedPlantImage);
+            nickname = itemView.findViewById(R.id.nickname);
+            commonName = itemView.findViewById(R.id.common_name);
+            scientificName = itemView.findViewById(R.id.scientific_name);
+            dropButton = itemView.findViewById(R.id.drop);
+            editButton = itemView.findViewById(R.id.edit);
+            deleteButton = itemView.findViewById(R.id.delete);
         }
     }
 }

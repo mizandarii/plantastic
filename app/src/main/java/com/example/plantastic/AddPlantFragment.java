@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
@@ -30,7 +31,6 @@ import com.example.plantastic.api.PlantAdapter;
 import com.example.plantastic.api.PlantResponse;
 import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.Fotod;
-import com.example.plantastic.data.entities.KastmisVajadusIntervall;
 import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.data.entities.Taim;
 import com.example.plantastic.data.entities.TaimLiik;
@@ -38,6 +38,7 @@ import com.example.plantastic.data.entities.TaimSort;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -55,6 +56,7 @@ public class AddPlantFragment extends Fragment {
     private SearchView searchView;
     private RecyclerView recyclerView;
     private ScrollView detailsForm;
+    private ProgressBar progressBar;
     private PlantAdapter adapter;
     private PerenualService apiService;
 
@@ -95,6 +97,7 @@ public class AddPlantFragment extends Fragment {
         searchView = view.findViewById(R.id.searchView);
         recyclerView = view.findViewById(R.id.recyclerView);
         detailsForm = view.findViewById(R.id.detailsForm);
+        progressBar = view.findViewById(R.id.progressBar);
         
         selectedPlantImage = view.findViewById(R.id.selectedPlantImage);
         editNickname = view.findViewById(R.id.editNickname);
@@ -112,7 +115,16 @@ public class AddPlantFragment extends Fragment {
         try {
             ApplicationInfo ai = requireContext().getPackageManager().getApplicationInfo(requireContext().getPackageName(), PackageManager.GET_META_DATA);
             apiKey = ai.metaData.getString("perenual_api_key");
-            Log.i("SEARCH_DEBUG", "API Key loaded: " + (apiKey != null ? "YES" : "NO"));
+            
+            // Clean key from possible quotes or spaces from local.properties
+            if (apiKey != null) {
+                apiKey = apiKey.replace("\"", "").trim();
+            }
+
+            if (apiKey == null || apiKey.isEmpty() || apiKey.contains("{")) {
+                Log.e("SEARCH_DEBUG", "API Key Error: " + apiKey);
+                Toast.makeText(getContext(), "API Key missing. Sync Gradle after editing local.properties", Toast.LENGTH_LONG).show();
+            }
         } catch (Exception e) {
             Log.e("API_ERROR", "Failed to load meta-data: " + e.getMessage());
         }
@@ -134,24 +146,19 @@ public class AddPlantFragment extends Fragment {
 
     private void setupSearch() {
         if (searchView == null) return;
-
-        searchView.setIconifiedByDefault(false);
         searchView.onActionViewExpanded(); 
-        
+        searchView.setSubmitButtonEnabled(true);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.i("SEARCH_DEBUG", "Query Submit: " + query);
-                searchPlants(query);
+                if (query.trim().length() > 0) {
+                    searchPlants(query.trim());
+                }
                 return true;
             }
-
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (newText.length() >= 1) { // Trigger earlier for testing
-                    Log.i("SEARCH_DEBUG", "Query Change: " + newText);
-                    searchPlants(newText);
-                }
+                // Manual search only to save API limits.
                 return true;
             }
         });
@@ -161,6 +168,7 @@ public class AddPlantFragment extends Fragment {
         selectedPlantData = plant;
         searchView.setVisibility(View.GONE);
         recyclerView.setVisibility(View.GONE);
+        if (progressBar != null) progressBar.setVisibility(View.GONE);
         detailsForm.setVisibility(View.VISIBLE);
 
         editNickname.setText(plant.getCommonName());
@@ -195,20 +203,32 @@ public class AddPlantFragment extends Fragment {
             try {
                 PlantasticDatabase db = PlantasticDatabase.getInstance(requireContext());
                 Kasutaja user = db.kasutajaDao().getFirstUser();
-                int userId = (user == null) ? (int) db.kasutajaDao().insert(new Kasutaja() {{ kasutajanimi = "Primary User"; }}) : user.id;
+                int userId = (user != null) ? user.id : (int) db.kasutajaDao().insert(new Kasutaja() {{ kasutajanimi = "Primary User"; }});
 
-                TaimLiik liik = db.taimLiikDao().getFirstLiik();
-                int liikId = (liik == null) ? (int) db.taimLiikDao().insert(new TaimLiik() {{ nimetus = "General"; ladinakeelne_nimetus = "Plantae"; }}) : liik.id;
+                String familyName = (selectedPlantData.getFamily() != null && !selectedPlantData.getFamily().isEmpty()) 
+                        ? selectedPlantData.getFamily() : "General";
+                TaimLiik liik = db.taimLiikDao().getByName(familyName);
+                int liikId;
+                if (liik == null) {
+                    liik = new TaimLiik();
+                    liik.nimetus = familyName;
+                    liik.ladinakeelne_nimetus = "Plantae";
+                    liikId = (int) db.taimLiikDao().insert(liik);
+                } else {
+                    liikId = liik.id;
+                }
 
-                KastmisVajadusIntervall interval = db.kastmisVajadusIntervallDao().getFirstInterval();
-                int intervalId = (interval == null) ? (int) db.kastmisVajadusIntervallDao().insert(new KastmisVajadusIntervall() {{ paevad = 7; }}) : interval.id;
+                int wateringIntensity = mapWateringToIntensity(selectedPlantData.getWatering());
+                int sunlightValue = mapSunlightToValue(selectedPlantData.getSunlight());
 
                 TaimSort sort = new TaimSort();
                 sort.nimetus = selectedPlantData.getCommonName();
-                sort.ladinakeelne_nimetus = (selectedPlantData.getScientificName() != null && !selectedPlantData.getScientificName().isEmpty()) 
-                        ? selectedPlantData.getScientificName().get(0) : "Unknown";
+                List<String> scientificNames = selectedPlantData.getScientificName();
+                sort.ladinakeelne_nimetus = (scientificNames != null && !scientificNames.isEmpty()) 
+                        ? scientificNames.get(0) : "Unknown";
                 sort.liik_id = liikId;
-                sort.kastmisvajadus = intervalId;
+                sort.kastmisvajadus = wateringIntensity;
+                sort.valgusnoudlikkus = sunlightValue;
                 long sortId = db.taimSortDao().insert(sort);
 
                 Taim taim = new Taim();
@@ -235,27 +255,61 @@ public class AddPlantFragment extends Fragment {
         }).start();
     }
 
-    private void searchPlants(String query) {
-        if (apiKey == null || apiKey.isEmpty() || apiKey.startsWith("${")) {
-            Log.e("SEARCH_ERROR", "API Key is missing or invalid in Manifest: " + apiKey);
-            return;
+    private int mapWateringToIntensity(String watering) {
+        if (watering == null) return 2; 
+        switch (watering.toLowerCase()) {
+            case "none": return 0;
+            case "minimum": return 1;
+            case "average": return 2;
+            case "frequent": return 3;
+            default: return 2;
         }
+    }
+
+    private int mapSunlightToValue(List<String> sunlight) {
+        if (sunlight == null || sunlight.isEmpty()) return 3;
+        String sun = sunlight.get(0).toLowerCase();
+        if (sun.contains("full_sun") || sun.contains("full sun")) return 5;
+        if (sun.contains("sun-part_shade") || (sun.contains("part") && sun.contains("sun"))) return 4;
+        if (sun.contains("part_shade") || sun.contains("part shade")) return 2;
+        if (sun.contains("full_shade") || sun.contains("full shade")) return 1;
+        return 3;
+    }
+
+    private void searchPlants(String query) {
+        if (apiKey == null || apiKey.isEmpty() || apiKey.contains("{")) return;
+
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        Log.d("SEARCH_DEBUG", "Starting search for: " + query);
 
         apiService.searchPlants(apiKey, query).enqueue(new Callback<PlantResponse>() {
             @Override
-            public void onResponse(Call<PlantResponse> call, Response<PlantResponse> response) {
+            public void onResponse(@NonNull Call<PlantResponse> call, @NonNull Response<PlantResponse> response) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null && isAdded()) {
-                    adapter.setPlants(response.body().getData());
-                    Log.i("SEARCH_DEBUG", "Results found: " + response.body().getData().size());
+                    List<PlantResponse.PlantData> results = response.body().getData();
+                    adapter.setPlants(results);
+                    if (results.isEmpty()) {
+                        Toast.makeText(getContext(), "No plants found for '" + query + "'", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Log.e("SEARCH_ERROR", "API Response Error: " + response.code() + " " + response.message());
+                    int code = response.code();
+                    if (code == 429) {
+                        Toast.makeText(getContext(), "API Limit Reached (100 calls). Wait until tomorrow.", Toast.LENGTH_LONG).show();
+                    } else if (code == 401 || code == 403) {
+                        Toast.makeText(getContext(), "Invalid API Key. Check local.properties.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getContext(), "Search failed: " + code, Toast.LENGTH_SHORT).show();
+                    }
+                    Log.e("SEARCH_ERROR", "Status: " + code + " Error: " + response.message());
                 }
             }
-
             @Override
-            public void onFailure(Call<PlantResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<PlantResponse> call, @NonNull Throwable t) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 if (isAdded()) {
                     Log.e("SEARCH_ERROR", "Network failure: " + t.getMessage());
+                    Toast.makeText(getContext(), "Check internet connection", Toast.LENGTH_SHORT).show();
                 }
             }
         });

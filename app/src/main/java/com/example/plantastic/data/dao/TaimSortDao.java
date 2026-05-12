@@ -13,4 +13,7 @@ public interface TaimSortDao {
 
     @Query("SELECT * FROM taim_sort WHERE id = :id")
     TaimSort getById(int id);
+
+    @Query("SELECT * FROM taim_sort LIMIT 1")
+    TaimSort getFirst();
 }

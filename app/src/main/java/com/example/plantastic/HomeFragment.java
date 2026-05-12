@@ -21,15 +21,6 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button addPlantBtn = view.findViewById(R.id.button2);
-        if (addPlantBtn != null) {
-            addPlantBtn.setOnClickListener(v -> {
-                // Use fragment transaction to keep the menu visible
-                FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
-                transaction.replace(R.id.frame_layout, new AddPlantFragment());
-                transaction.addToBackStack(null);
-                transaction.commit();
-            });
-        }
+
     }
 }

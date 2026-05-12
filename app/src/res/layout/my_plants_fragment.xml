@@ -14,14 +14,13 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
         android:text="Minu taimed"
-        android:textSize="48sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/btnAdd"
-        android:layout_width="73dp"
-        android:layout_height="59dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Lisa taim"
@@ -43,6 +42,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/titleText"
-        tools:listitem="@layout/my_plant_card" />
+        tools:listitem="@layout/plant_item_fragment" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

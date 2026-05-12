@@ -2,28 +2,14 @@ package com.example.plantastic.data;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.example.plantastic.data.dao.FotodDao;
-import com.example.plantastic.data.dao.HooldusAjaluguDao;
-import com.example.plantastic.data.dao.KasutajaDao;
-import com.example.plantastic.data.dao.TaimDao;
-import com.example.plantastic.data.dao.TeadeDao;
-import com.example.plantastic.data.dao.TaimLiikDao;
-import com.example.plantastic.data.dao.TaimSortDao;
-import com.example.plantastic.data.dao.KastmisVajadusIntervallDao;
-import com.example.plantastic.data.dao.HooldusTüüpDao;
-import com.example.plantastic.data.entities.Fotod;
-import com.example.plantastic.data.entities.HooldusAjalugu;
-import com.example.plantastic.data.entities.HooldusTüüp;
-import com.example.plantastic.data.entities.KastmisVajadusIntervall;
-import com.example.plantastic.data.entities.Kasutaja;
-import com.example.plantastic.data.entities.Taim;
-import com.example.plantastic.data.entities.TaimLiik;
-import com.example.plantastic.data.entities.TaimSort;
-import com.example.plantastic.data.entities.Teade;
+import com.example.plantastic.data.dao.*;
+import com.example.plantastic.data.entities.*;
 
 @Database(
         entities = {
@@ -37,11 +23,12 @@ import com.example.plantastic.data.entities.Teade;
                 Fotod.class,
                 KastmisVajadusIntervall.class
         },
-        version = 3,
+        version = 7,
         exportSchema = false
 )
 public abstract class PlantasticDatabase extends RoomDatabase {
-    private static PlantasticDatabase INSTANCE;
+
+    private static volatile PlantasticDatabase INSTANCE;
 
     public abstract KasutajaDao kasutajaDao();
     public abstract TaimDao taimDao();
@@ -53,13 +40,27 @@ public abstract class PlantasticDatabase extends RoomDatabase {
     public abstract KastmisVajadusIntervallDao kastmisVajadusIntervallDao();
     public abstract HooldusTüüpDao hooldusTüüpDao();
 
-    public static synchronized PlantasticDatabase getInstance(Context context) {
+    public static PlantasticDatabase getInstance(Context context) {
         if (INSTANCE == null) {
-            INSTANCE = Room.databaseBuilder(
-                    context.getApplicationContext(),
-                    PlantasticDatabase.class,
-                    "plantastic_db"
-            ).fallbackToDestructiveMigration().build();
+            synchronized (PlantasticDatabase.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = Room.databaseBuilder(
+                                    context.getApplicationContext(),
+                                    PlantasticDatabase.class,
+                                    "plantastic_db"
+                            )
+                            .fallbackToDestructiveMigration()
+                            .addCallback(new RoomDatabase.Callback() {
+                                @Override
+                                public void onCreate(@NonNull SupportSQLiteDatabase db) {
+                                    super.onCreate(db);
+                                    // seed only ONCE at first creation
+                                    DatabaseSeeder.seed(context);
+                                }
+                            })
+                            .build();
+                }
+            }
         }
         return INSTANCE;
     }
