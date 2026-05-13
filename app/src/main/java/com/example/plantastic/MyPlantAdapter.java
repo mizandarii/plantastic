@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.plantastic.data.entities.TaimWithDetails;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
 public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantViewHolder> {
 
     private List<TaimWithDetails> plants = new ArrayList<>();
-    private OnPlantClickListener listener;
+    private final OnPlantClickListener listener;
 
     public interface OnPlantClickListener {
         void onPlantClick(TaimWithDetails plant);
@@ -38,21 +39,19 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
     public void onBindViewHolder(@NonNull MyPlantViewHolder holder, int position) {
         TaimWithDetails plantWithDetails = plants.get(position);
         
-        // Use the nickname field for the user's custom name
         holder.nickname.setText(plantWithDetails.taim.nimi);
+        holder.commonName.setVisibility(View.GONE);
+        holder.scientificName.setVisibility(View.GONE);
 
-        if (plantWithDetails.sort != null) {
-            // Use common_name for the sort name (e.g., "Nefroleep")
-            holder.commonName.setText(plantWithDetails.sort.nimetus);
-            // Use scientific_name for the scientific name
-            holder.scientificName.setText(plantWithDetails.sort.ladinakeelne_nimetus);
+        if (plantWithDetails.fotos != null && !plantWithDetails.fotos.isEmpty() && plantWithDetails.fotos.get(0).foto != null) {
+            Glide.with(holder.itemView)
+                    .load(plantWithDetails.fotos.get(0).foto)
+                    .placeholder(R.drawable.ic_flower)
+                    .error(R.drawable.ic_flower)
+                    .into(holder.plantImage);
         } else {
-            holder.commonName.setText("");
-            holder.scientificName.setText("");
+            holder.plantImage.setImageResource(R.drawable.ic_flower);
         }
-
-        // Using placeholder for now
-        holder.plantImage.setImageResource(R.drawable.ic_flower);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -60,7 +59,6 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
             }
         });
         
-        // Hide edit/delete for now or set listeners if needed
         holder.editButton.setOnClickListener(v -> {
             // Handle edit
         });
@@ -79,7 +77,7 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
         notifyDataSetChanged();
     }
 
-    static class MyPlantViewHolder extends RecyclerView.ViewHolder {
+    public static class MyPlantViewHolder extends RecyclerView.ViewHolder {
         ImageView plantImage;
         TextView nickname;
         TextView commonName;

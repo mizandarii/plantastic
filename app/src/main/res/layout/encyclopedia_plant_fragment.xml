@@ -3,22 +3,217 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/bgcolor">
 
+    <!-- КНОПКА НАЗАД (Стрелка) -->
+    <ImageView
+        android:id="@+id/backButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="16dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@+id/titleText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/titleText"
+        app:srcCompat="@drawable/weui_arrow_filled__1_"
+         />
+
+    <!-- ЗАГОЛОВОК СТРАНИЦЫ -->
     <TextView
         android:id="@+id/titleText"
         style="@style/ScreenHeader"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:text="@string/encyclopedia_title"
-
+        android:textSize="32sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/backButton"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- КАРТОЧКА С КОНТЕНТОМ (Занимает всё свободное место до низа экрана) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/contentCard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#C5D192"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleText">
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Изображение растения -->
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/plantImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/plant"
+                    app:shapeAppearanceOverlay="@style/rounded_corners" />
+
+                <TextView
+                    android:id="@+id/commonNameText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Common Name"
+                    android:textColor="@color/daark_green"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/descriptionText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Description goes here..."
+                    android:textColor="@color/daark_green" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/dark_rounded_rect"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="origin region"
+                        android:textColor="@color/tekstEnts" />
+
+                    <TextView
+                        android:id="@+id/originText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Unknown"
+                        android:textColor="@color/tekstEnts" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="sunlight requirement"
+                        android:textColor="@color/tekstEnts" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/sun1"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_sun"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3"
+                            />
+                        <ImageView
+                            android:id="@+id/sun2"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_sun"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3"
+                        />
+                        <ImageView
+                            android:id="@+id/sun3"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_sun"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                        <ImageView
+                            android:id="@+id/sun4"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_sun"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3"
+                            />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="water requirement"
+                        android:textColor="@color/tekstEnts" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/drop1"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="11dp"
+                            android:src="@drawable/ic_drop"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                        <ImageView
+                            android:id="@+id/drop2"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="11dp"
+                            android:src="@drawable/ic_drop"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                        <ImageView
+                            android:id="@+id/drop3"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="11dp"
+                            android:src="@drawable/ic_drop"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                        <ImageView
+                            android:id="@+id/drop4"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="11dp"
+                            android:src="@drawable/ic_drop"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                        <ImageView
+                            android:id="@+id/drop5"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="11dp"
+                            android:src="@drawable/ic_drop"
+                            app:tint="@color/tekstEnts"
+                            android:alpha="0.3" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

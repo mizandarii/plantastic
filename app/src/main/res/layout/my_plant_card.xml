@@ -44,19 +44,19 @@
                 android:id="@+id/common_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nickname"
+                android:text="Common Name"
                 android:textColor="@color/daark_green"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
             <TextView
                 android:id="@+id/scientific_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nickname"
+                android:text="Scientific Name"
                 android:textColor="@color/daark_green"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="12sp"
+                android:textStyle="italic" />
         </LinearLayout>
+
         <ImageView
             android:id="@+id/drop"
             android:layout_width="24dp"

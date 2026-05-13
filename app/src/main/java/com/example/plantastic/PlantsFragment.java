@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -56,7 +55,8 @@ public class PlantsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         
         adapter = new MyPlantAdapter(plant -> {
-            // Handle plant click if needed
+            // Navigate to MyPlantFragment when plant is clicked
+            navigateToPlantDetails(plant);
         });
         recyclerView.setAdapter(adapter);
 
@@ -76,5 +76,17 @@ public class PlantsFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void navigateToPlantDetails(TaimWithDetails plant) {
+        MyPlantFragment detailFragment = new MyPlantFragment();
+        Bundle args = new Bundle();
+        args.putInt("plantId", plant.taim.id);
+        detailFragment.setArguments(args);
+
+        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_layout, detailFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 }

@@ -27,4 +27,6 @@ public class Taim {
     public int sort_id;
 
     public int kasutaja_id;
+
+    public String kirjeldus;
 }

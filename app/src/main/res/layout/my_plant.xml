@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bgcolor"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Plant Picture -->
+        <FrameLayout
+            android:id="@+id/btnTakePhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="200dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/search_view_bg">
+
+            <ImageView
+                android:id="@+id/selectedPlantImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/selected_plant_image" />
+        </FrameLayout>
+
+        <!-- Nickname field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/nickname_label"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editNickname"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/search_view_bg"
+            android:paddingHorizontal="12dp"
+            android:inputType="textPersonName"
+            android:hint="@string/enter_nickname"
+            android:autofillHints="username"
+            android:textColor="@color/black"
+            android:layout_marginBottom="16dp"
+            android:enabled="false"
+            android:focusable="false"
+            android:cursorVisible="false" />
+
+        <!-- Type field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/type_label"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editSpecies"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/search_view_bg"
+            android:paddingHorizontal="12dp"
+            android:inputType="text"
+            android:hint="@string/enter_species"
+            android:autofillHints="off"
+            android:textColor="@color/black"
+            android:layout_marginBottom="16dp"
+            android:enabled="false"
+            android:focusable="false"
+            android:cursorVisible="false" />
+
+        <!-- Description field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/description_label"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/editDescription"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/search_view_bg"
+            android:padding="12dp"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:hint="@string/enter_description"
+            android:autofillHints="off"
+            android:textColor="@color/black"
+            android:layout_marginBottom="24dp"
+            android:enabled="false"
+            android:focusable="false"
+            android:cursorVisible="false" />
+
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </TableLayout>
+
+        <!-- Horizontal container for control buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp"
+            style="?android:attr/buttonBarStyle">
+
+            <!-- Water button (kasta) -->
+            <Button
+                android:id="@+id/btnWater"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="@color/btncolor"
+                android:textColor="@color/white"
+                android:text="Kasta"
+                android:textAllCaps="false"
+                android:textSize="20sp"
+                style="?android:attr/buttonBarButtonStyle"
+                app:cornerRadius="12dp"
+                android:fontFamily="@font/inter_28pt_regular"
+                android:minHeight="48dp"
+                android:minWidth="48dp" />
+
+            <!-- Edit button (muuta) -->
+            <Button
+                android:id="@+id/btnEdit"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="@color/btncolor"
+                android:text="Muuta"
+                android:fontFamily="@font/inter_28pt_regular"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                style="?android:attr/buttonBarButtonStyle"
+                app:cornerRadius="12dp"
+                android:minHeight="48dp"
+                android:minWidth="48dp" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+</ScrollView>

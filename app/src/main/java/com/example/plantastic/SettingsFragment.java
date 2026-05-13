@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.Kasutaja;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SettingsFragment extends Fragment {
@@ -24,6 +25,9 @@ public class SettingsFragment extends Fragment {
     private TextView endTimeText;
     private PlantasticDatabase db;
     private Kasutaja currentUser;
+    private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
+    private static final long DEFAULT_START_MINUTES = 8 * 60;
+    private static final long DEFAULT_END_MINUTES = 22 * 60;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -54,8 +58,28 @@ public class SettingsFragment extends Fragment {
     }
 
     private void loadSettings() {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        ioExecutor.execute(() -> {
             currentUser = db.kasutajaDao().getFirstUser();
+            if (currentUser == null) {
+                Kasutaja user = new Kasutaja();
+                user.kasutajanimi = "Primary User";
+                user.teade_on = false;
+                user.teade_start = DEFAULT_START_MINUTES;
+                user.teade_aeg = DEFAULT_END_MINUTES;
+                long id = db.kasutajaDao().insert(user);
+                user.id = (int) id;
+                currentUser = user;
+            }
+
+            long normalizedStart = normalizeMinutes(currentUser.teade_start, DEFAULT_START_MINUTES);
+            long normalizedEnd = normalizeMinutes(currentUser.teade_aeg, DEFAULT_END_MINUTES);
+            boolean needsUpdate = normalizedStart != currentUser.teade_start || normalizedEnd != currentUser.teade_aeg;
+            currentUser.teade_start = normalizedStart;
+            currentUser.teade_aeg = normalizedEnd;
+            if (needsUpdate) {
+                db.kasutajaDao().update(currentUser);
+            }
+
             if (currentUser != null && getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     notificationSwitch.setChecked(currentUser.teade_on);
@@ -90,9 +114,27 @@ public class SettingsFragment extends Fragment {
 
     private void saveSettings() {
         if (currentUser == null) return;
-        Executors.newSingleThreadExecutor().execute(() -> {
+        ioExecutor.execute(() -> {
             db.kasutajaDao().update(currentUser);
         });
+    }
+
+    private long normalizeMinutes(long rawValue, long fallback) {
+        long minutes = rawValue;
+        if (minutes < 0) {
+            return fallback;
+        }
+
+        // Handle old values accidentally stored as epoch millis or seconds.
+        if (minutes > 24 * 60 - 1) {
+            if (minutes > 24L * 60L * 60L) {
+                minutes = minutes / 60000L;
+            } else {
+                minutes = minutes / 60L;
+            }
+        }
+
+        return minutes % (24 * 60);
     }
 
     private String formatTime(long minutesFromMidnight) {

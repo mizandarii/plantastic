@@ -35,28 +35,41 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
     public void onBindViewHolder(@NonNull PlantViewHolder holder, int position) {
         PlantResponse.PlantData plant = plants.get(position);
         
-        // Hide nickname and action buttons for encyclopedia items
-        holder.nickname.setVisibility(View.GONE);
-        holder.dropButton.setVisibility(View.GONE);
-        holder.editButton.setVisibility(View.GONE);
-        holder.deleteButton.setVisibility(View.GONE);
+        // Safety checks for views that might not be in the layout
+        if (holder.nickname != null) holder.nickname.setVisibility(View.GONE);
+        if (holder.dropButton != null) holder.dropButton.setVisibility(View.GONE);
+        if (holder.editButton != null) holder.editButton.setVisibility(View.GONE);
+        if (holder.deleteButton != null) holder.deleteButton.setVisibility(View.GONE);
 
-        holder.commonName.setText(plant.getCommonName());
-
-        if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
-            holder.scientificName.setText(plant.getScientificName().get(0));
-        } else {
-            holder.scientificName.setText("");
+        if (holder.commonName != null) {
+            holder.commonName.setText(plant.getCommonName());
         }
 
-        if (plant.getDefaultImage() != null) {
-            Glide.with(holder.itemView.getContext())
-                    .load(plant.getDefaultImage().getThumbnail())
-                    .placeholder(R.mipmap.ic_launcher)
-                    .into(holder.plantImage);
-        } else {
-            holder.plantImage.setImageResource(R.mipmap.ic_launcher);
+        if (holder.scientificName != null) {
+            if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
+                holder.scientificName.setText(plant.getScientificName().get(0));
+            } else {
+                holder.scientificName.setText("");
+            }
         }
+
+        if (holder.plantImage != null) {
+            if (plant.getDefaultImage() != null) {
+                Glide.with(holder.itemView.getContext())
+                        .load(plant.getDefaultImage().getThumbnail())
+                        .placeholder(R.mipmap.ic_launcher)
+                        .into(holder.plantImage);
+            } else {
+                holder.plantImage.setImageResource(R.mipmap.ic_launcher);
+            }
+        }
+
+        // Sunlight logic for the card (if icons exist)
+        int level = plant.getSunlightLevel();
+        if (holder.sun1 != null) holder.sun1.setAlpha(level >= 1 ? 1.0f : 0.3f);
+        if (holder.sun2 != null) holder.sun2.setAlpha(level >= 2 ? 1.0f : 0.3f);
+        if (holder.sun3 != null) holder.sun3.setAlpha(level >= 3 ? 1.0f : 0.3f);
+        if (holder.sun4 != null) holder.sun4.setAlpha(level >= 4 ? 1.0f : 0.3f);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -83,6 +96,8 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
         ImageView dropButton;
         ImageView editButton;
         ImageView deleteButton;
+        
+        ImageView sun1, sun2, sun3, sun4;
 
         public PlantViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -93,6 +108,11 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
             dropButton = itemView.findViewById(R.id.drop);
             editButton = itemView.findViewById(R.id.edit);
             deleteButton = itemView.findViewById(R.id.delete);
+            
+            sun1 = itemView.findViewById(R.id.sun1);
+            sun2 = itemView.findViewById(R.id.sun2);
+            sun3 = itemView.findViewById(R.id.sun3);
+            sun4 = itemView.findViewById(R.id.sun4);
         }
     }
 }

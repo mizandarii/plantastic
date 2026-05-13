@@ -23,7 +23,7 @@ import com.example.plantastic.data.entities.*;
                 Fotod.class,
                 KastmisVajadusIntervall.class
         },
-        version = 7,
+        version = 8,
         exportSchema = false
 )
 public abstract class PlantasticDatabase extends RoomDatabase {

@@ -33,6 +33,10 @@ public interface TaimDao {
     @Query("SELECT * FROM taim WHERE id = :id")
     Taim getById(int id);
 
+    @Transaction
+    @Query("SELECT * FROM taim WHERE id = :id")
+    TaimWithDetails getWithDetailsById(int id);
+
     @Query("SELECT * FROM taim")
     List <Taim> getAll();
 }

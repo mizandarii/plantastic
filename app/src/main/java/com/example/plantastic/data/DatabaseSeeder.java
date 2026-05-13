@@ -21,8 +21,9 @@ public class DatabaseSeeder {
         if (user == null) {
             user = new Kasutaja();
             user.kasutajanimi = "Test User";
-            user.teade_start = System.currentTimeMillis();
-            user.teade_aeg = 3600000;
+            user.teade_on = false;
+            user.teade_start = 8 * 60;
+            user.teade_aeg = 22 * 60;
 
             long userId = db.kasutajaDao().insert(user);
             user.id = (int) userId;

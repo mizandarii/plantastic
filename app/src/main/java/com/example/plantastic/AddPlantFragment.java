@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -35,10 +36,13 @@ import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.data.entities.Taim;
 import com.example.plantastic.data.entities.TaimLiik;
 import com.example.plantastic.data.entities.TaimSort;
-import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -61,18 +65,28 @@ public class AddPlantFragment extends Fragment {
     private PerenualService apiService;
 
     private ImageView selectedPlantImage;
-    private TextInputEditText editNickname, editSpecies;
-    private Button btnSavePlant, btnCancel, btnTakePhoto;
+    private EditText editNickname, editSpecies, editDescription;
+    private Button btnSavePlant, btnCancel;
+    private View btnTakePhoto;
 
     private Uri selectedImageUri;
+    private String selectedImagePath;
     private PlantResponse.PlantData selectedPlantData;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    selectedImageUri = result.getData().getData();
-                    selectedPlantImage.setImageURI(selectedImageUri);
+                    Uri imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        selectedImageUri = imageUri;
+                        selectedImagePath = saveImageToInternalStorage(imageUri);
+                        if (selectedImagePath != null) {
+                            Glide.with(this).load(selectedImagePath).into(selectedPlantImage);
+                        } else {
+                            selectedPlantImage.setImageURI(selectedImageUri);
+                        }
+                    }
                 }
             }
     );
@@ -102,6 +116,7 @@ public class AddPlantFragment extends Fragment {
         selectedPlantImage = view.findViewById(R.id.selectedPlantImage);
         editNickname = view.findViewById(R.id.editNickname);
         editSpecies = view.findViewById(R.id.editSpecies);
+        editDescription = view.findViewById(R.id.editDescription);
         btnSavePlant = view.findViewById(R.id.btnSavePlant);
         btnCancel = view.findViewById(R.id.btnCancel);
         btnTakePhoto = view.findViewById(R.id.btnTakePhoto);
@@ -192,6 +207,28 @@ public class AddPlantFragment extends Fragment {
         imagePickerLauncher.launch(intent);
     }
 
+    private String saveImageToInternalStorage(@NonNull Uri imageUri) {
+        try (InputStream inputStream = requireContext().getContentResolver().openInputStream(imageUri)) {
+            if (inputStream == null) return null;
+
+            File imagesDir = new File(requireContext().getFilesDir(), "plant_images");
+            if (!imagesDir.exists() && !imagesDir.mkdirs()) return null;
+
+            File imageFile = new File(imagesDir, "plant_" + System.currentTimeMillis() + ".jpg");
+            try (FileOutputStream outputStream = new FileOutputStream(imageFile)) {
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            return imageFile.getAbsolutePath();
+        } catch (IOException e) {
+            Log.e("IMAGE_SAVE", "Failed to copy selected image", e);
+            return null;
+        }
+    }
+
     private void savePlant() {
         String nickname = editNickname.getText().toString();
         if (nickname.isEmpty()) {
@@ -218,8 +255,8 @@ public class AddPlantFragment extends Fragment {
                     liikId = liik.id;
                 }
 
-                int wateringIntensity = mapWateringToIntensity(selectedPlantData.getWatering());
-                int sunlightValue = mapSunlightToValue(selectedPlantData.getSunlight());
+                // Translate API sunlight to 1-4 level
+                int sunlightLevel = selectedPlantData.getSunlightLevel();
 
                 TaimSort sort = new TaimSort();
                 sort.nimetus = selectedPlantData.getCommonName();
@@ -227,20 +264,21 @@ public class AddPlantFragment extends Fragment {
                 sort.ladinakeelne_nimetus = (scientificNames != null && !scientificNames.isEmpty()) 
                         ? scientificNames.get(0) : "Unknown";
                 sort.liik_id = liikId;
-                sort.kastmisvajadus = wateringIntensity;
-                sort.valgusnoudlikkus = sunlightValue;
+                sort.kastmisvajadus = mapWateringToIntensity(selectedPlantData.getWatering());
+                sort.valgusnoudlikkus = sunlightLevel;
                 long sortId = db.taimSortDao().insert(sort);
 
                 Taim taim = new Taim();
                 taim.nimi = nickname;
                 taim.sort_id = (int) sortId;
                 taim.kasutaja_id = userId;
+                taim.kirjeldus = editDescription.getText().toString();
                 long taimId = db.taimDao().insert(taim);
 
                 if (selectedImageUri != null) {
                     Fotod foto = new Fotod();
                     foto.taim_id = (int) taimId;
-                    foto.foto = selectedImageUri.toString();
+                    foto.foto = selectedImagePath != null ? selectedImagePath : selectedImageUri.toString();
                     db.fotodDao().insert(foto);
                 }
 
@@ -264,16 +302,6 @@ public class AddPlantFragment extends Fragment {
             case "frequent": return 3;
             default: return 2;
         }
-    }
-
-    private int mapSunlightToValue(List<String> sunlight) {
-        if (sunlight == null || sunlight.isEmpty()) return 3;
-        String sun = sunlight.get(0).toLowerCase();
-        if (sun.contains("full_sun") || sun.contains("full sun")) return 5;
-        if (sun.contains("sun-part_shade") || (sun.contains("part") && sun.contains("sun"))) return 4;
-        if (sun.contains("part_shade") || sun.contains("part shade")) return 2;
-        if (sun.contains("full_shade") || sun.contains("full shade")) return 1;
-        return 3;
     }
 
     private void searchPlants(String query) {

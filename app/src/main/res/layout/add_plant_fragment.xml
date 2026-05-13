@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -45,86 +44,147 @@
     <ScrollView
         android:id="@+id/detailsForm"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:background="@color/bgcolor"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="20dp">
 
+            <!-- Button container for adding photo with plus icon -->
+            <FrameLayout
+                android:id="@+id/btnTakePhoto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="140dp"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/search_view_bg">
+
+                <ImageView
+                    android:id="@+id/selectedPlantImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/selected_plant_image" />
+
+                <!-- Plus icon centered -->
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_input_add"
+                    android:contentDescription="@string/add_photo"
+                    app:tint="@color/black" />
+            </FrameLayout>
+
+            <!-- Nickname field -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:text="Add New Plant"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:text="@string/nickname_label"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
 
-            <ImageView
-                android:id="@+id/selectedPlantImage"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="16dp"
-                android:background="@color/tekstEnts"
-                android:scaleType="centerCrop"
-                android:src="@mipmap/ic_launcher" />
+            <EditText
+                android:id="@+id/editNickname"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/search_view_bg"
+                android:paddingHorizontal="12dp"
+                android:inputType="textPersonName"
+                android:hint="@string/enter_nickname"
+                android:autofillHints="username"
+                android:textColor="@color/black"
+                android:layout_marginBottom="16dp" />
 
-            <Button
-                android:id="@+id/btnTakePhoto"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+            <!-- Type field -->
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginBottom="24dp"
-                android:text="Change Photo" />
+                android:text="@string/type_label"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <EditText
+                android:id="@+id/editSpecies"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/search_view_bg"
+                android:paddingHorizontal="12dp"
+                android:inputType="text"
+                android:hint="@string/enter_species"
+                android:autofillHints="off"
+                android:textColor="@color/black"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Description field -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/description_label"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/editDescription"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:background="@drawable/search_view_bg"
+                android:padding="12dp"
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:hint="@string/enter_description"
+                android:autofillHints="off"
+                android:textColor="@color/black"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Horizontal container for control buttons -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                style="?android:attr/buttonBarStyle">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editNickname"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Plant Nickname" />
-            </com.google.android.material.textfield.TextInputLayout>
+                <Button
+                    android:id="@+id/btnCancel"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/btncolor"
+                    android:textColor="@color/white"
+                    android:text="@string/cancel"
+                    android:textAllCaps="false"
+                    android:textSize="20sp"
+                    style="?android:attr/buttonBarButtonStyle"
+                    app:cornerRadius="12dp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:enabled="false">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editSpecies"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Species" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnSavePlant"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Save to My Garden" />
-
-            <Button
-                android:id="@+id/btnCancel"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Cancel"
-                android:textColor="#FF0000" />
+                <Button
+                    android:id="@+id/btnSavePlant"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:backgroundTint="@color/btncolor"
+                    android:text="@string/save"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    style="?android:attr/buttonBarButtonStyle"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

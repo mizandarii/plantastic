@@ -12,4 +12,14 @@
     <string name="seaded">Seaded</string>
     <string name="tere">Tere!</string>
     <string name="lemmikud">Lemmikud</string>
+    <string name="selected_plant_image">Selected plant image</string>
+    <string name="add_photo">Add photo</string>
+    <string name="nickname_label">Nimi:</string>
+    <string name="enter_nickname">Enter plant nickname</string>
+    <string name="type_label">Tüüp:</string>
+    <string name="enter_species">Enter plant species</string>
+    <string name="description_label">Kirjeldus (Valik.):</string>
+    <string name="enter_description">Enter description (optional)</string>
+    <string name="cancel">Tühista</string>
+    <string name="save">Salvesta</string>
 </resources>
