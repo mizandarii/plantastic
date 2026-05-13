@@ -7,6 +7,4 @@ Plantastic is a mobile application designed to help users manage their houseplan
 - **My Plants:** Add your plants, track watering schedule, mark when watered.
 - **Smart Notifications:** Get reminders when it’s time to water, with options to postpone.
 - **Plant Encyclopedia:** Information about popular plants, including watering frequency, light needs, and care tips.
-- **Community Q&A:** Ask questions, share tips, and see answers from other users.
-- **FAQ / Care Guide:** Verified advice about plant care.
 - **Offline Support:** Plant data and watering schedules work offline.
