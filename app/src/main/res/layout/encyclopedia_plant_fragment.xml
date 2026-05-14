@@ -77,6 +77,15 @@
                     android:textColor="@color/daark_green"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/scientificNameText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp"
+                    android:text="scientific name"
+                    android:textColor="@color/daark_green"
+                    android:textSize="18sp"
+                    android:textStyle="italic" />
 
                 <TextView
                     android:id="@+id/descriptionText"
@@ -97,14 +106,31 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="origin region"
-                        android:textColor="@color/tekstEnts" />
+                        android:layout_marginTop="8dp"
+                        android:text="care level"
+                        android:textColor="@color/tekstEnts"
+                        android:textStyle="bold"
+                        />
 
                     <TextView
-                        android:id="@+id/originText"
+                        android:id="@+id/careLevel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Unknown"
+                        android:text="medium"
+                        android:textColor="@color/tekstEnts" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="toxic to pets"
+                        android:textColor="@color/tekstEnts"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/toxicToPets"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="no"
                         android:textColor="@color/tekstEnts" />
 
                     <TextView
@@ -112,6 +138,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="sunlight requirement"
+                        android:textStyle="bold"
+
                         android:textColor="@color/tekstEnts" />
 
                     <LinearLayout
@@ -162,6 +190,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="water requirement"
+                        android:textStyle="bold"
                         android:textColor="@color/tekstEnts" />
 
                     <LinearLayout
@@ -194,22 +223,7 @@
                             android:src="@drawable/ic_drop"
                             app:tint="@color/tekstEnts"
                             android:alpha="0.3" />
-                        <ImageView
-                            android:id="@+id/drop4"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
-                            android:layout_marginEnd="11dp"
-                            android:src="@drawable/ic_drop"
-                            app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
-                        <ImageView
-                            android:id="@+id/drop5"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
-                            android:layout_marginEnd="11dp"
-                            android:src="@drawable/ic_drop"
-                            app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
+
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>

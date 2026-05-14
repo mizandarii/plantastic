@@ -2,14 +2,15 @@ package com.example.plantastic.data;
 
 import android.content.Context;
 
-import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.plantastic.data.dao.*;
 import com.example.plantastic.data.entities.*;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Database(
         entities = {
@@ -23,12 +24,13 @@ import com.example.plantastic.data.entities.*;
                 Fotod.class,
                 KastmisVajadusIntervall.class
         },
-        version = 8,
+        version = 9,
         exportSchema = false
 )
 public abstract class PlantasticDatabase extends RoomDatabase {
 
     private static volatile PlantasticDatabase INSTANCE;
+    private static final ExecutorService SEED_EXECUTOR = Executors.newSingleThreadExecutor();
 
     public abstract KasutajaDao kasutajaDao();
     public abstract TaimDao taimDao();
@@ -50,15 +52,11 @@ public abstract class PlantasticDatabase extends RoomDatabase {
                                     "plantastic_db"
                             )
                             .fallbackToDestructiveMigration()
-                            .addCallback(new RoomDatabase.Callback() {
-                                @Override
-                                public void onCreate(@NonNull SupportSQLiteDatabase db) {
-                                    super.onCreate(db);
-                                    // seed only ONCE at first creation
-                                    DatabaseSeeder.seed(context);
-                                }
-                            })
                             .build();
+
+                    // Run seeding off the caller thread and only after INSTANCE is available.
+                    final PlantasticDatabase dbInstance = INSTANCE;
+                    SEED_EXECUTOR.execute(() -> DatabaseSeeder.seed(dbInstance));
                 }
             }
         }

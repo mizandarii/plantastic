@@ -20,7 +20,7 @@ public class HooldusAjalugu {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public int hooldusTüüp_id;
+    public Integer hooldusTüüp_id;
 
     public long aeg; // timestamp
 

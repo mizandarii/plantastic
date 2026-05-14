@@ -17,6 +17,9 @@ public interface HooldusTüüpDao {
     @Query("SELECT * FROM hooldusTüüp WHERE id = :id")
     HooldusTüüp getById(int id);
 
+    @Query("SELECT * FROM hooldusTüüp WHERE nimetus = :nimetus LIMIT 1")
+    HooldusTüüp getByName(String nimetus);
+
     @Query("SELECT * FROM hooldusTüüp")
     List<HooldusTüüp> getAll();
 }

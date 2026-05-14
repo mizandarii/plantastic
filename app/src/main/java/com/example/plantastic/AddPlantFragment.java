@@ -71,6 +71,7 @@ public class AddPlantFragment extends Fragment {
 
     private Uri selectedImageUri;
     private String selectedImagePath;
+    private String selectedApiImageUrl;
     private PlantResponse.PlantData selectedPlantData;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
@@ -181,6 +182,9 @@ public class AddPlantFragment extends Fragment {
 
     private void showDetailsForm(PlantResponse.PlantData plant) {
         selectedPlantData = plant;
+        selectedImageUri = null;
+        selectedImagePath = null;
+        selectedApiImageUrl = null;
         searchView.setVisibility(View.GONE);
         recyclerView.setVisibility(View.GONE);
         if (progressBar != null) progressBar.setVisibility(View.GONE);
@@ -190,9 +194,12 @@ public class AddPlantFragment extends Fragment {
         editSpecies.setText(plant.getCommonName());
 
         if (plant.getDefaultImage() != null) {
+            selectedApiImageUrl = plant.getDefaultImage().getThumbnail();
             Glide.with(this)
-                    .load(plant.getDefaultImage().getThumbnail())
+                    .load(selectedApiImageUrl)
                     .into(selectedPlantImage);
+        } else {
+            selectedPlantImage.setImageResource(R.drawable.ic_flower);
         }
     }
 
@@ -236,6 +243,11 @@ public class AddPlantFragment extends Fragment {
             return;
         }
 
+        if (selectedPlantData == null) {
+            Toast.makeText(getContext(), "Please select a plant from search first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new Thread(() -> {
             try {
                 PlantasticDatabase db = PlantasticDatabase.getInstance(requireContext());
@@ -275,10 +287,19 @@ public class AddPlantFragment extends Fragment {
                 taim.kirjeldus = editDescription.getText().toString();
                 long taimId = db.taimDao().insert(taim);
 
-                if (selectedImageUri != null) {
+                String imageToSave = null;
+                if (selectedImagePath != null && !selectedImagePath.trim().isEmpty()) {
+                    imageToSave = selectedImagePath;
+                } else if (selectedImageUri != null) {
+                    imageToSave = selectedImageUri.toString();
+                } else if (selectedApiImageUrl != null && !selectedApiImageUrl.trim().isEmpty()) {
+                    imageToSave = selectedApiImageUrl;
+                }
+
+                if (imageToSave != null) {
                     Fotod foto = new Fotod();
                     foto.taim_id = (int) taimId;
-                    foto.foto = selectedImagePath != null ? selectedImagePath : selectedImageUri.toString();
+                    foto.foto = imageToSave;
                     db.fotodDao().insert(foto);
                 }
 
@@ -294,14 +315,22 @@ public class AddPlantFragment extends Fragment {
     }
 
     private int mapWateringToIntensity(String watering) {
-        if (watering == null) return 2; 
-        switch (watering.toLowerCase()) {
-            case "none": return 0;
-            case "minimum": return 1;
-            case "average": return 2;
-            case "frequent": return 3;
-            default: return 2;
-        }
+        if (watering == null) return 2;
+        String w = watering.toLowerCase().trim();
+
+        // Numeric values like "1", "2", "3" etc.
+        try {
+            int parsed = Integer.parseInt(w.replaceAll("[^0-9]", ""));
+            if (parsed >= 0 && parsed <= 4) return parsed;
+        } catch (Exception ignored) {}
+
+        if (w.contains("none") || w.contains("no") || w.contains("rare")) return 0;
+        if (w.contains("min") || w.contains("low") || w.contains("minimum") || w.contains("seldom") || w.contains("occasional")) return 1;
+        if (w.contains("avg") || w.contains("average") || w.contains("moderate") || w.contains("regular")) return 2;
+        if (w.contains("freq") || w.contains("frequent") || w.contains("often") || w.contains("high")) return 3;
+
+        // default fallback
+        return 2;
     }
 
     private void searchPlants(String query) {

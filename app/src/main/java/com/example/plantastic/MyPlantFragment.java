@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.plantastic.data.PlantasticDatabase;
+import com.example.plantastic.data.entities.HooldusAjalugu;
+import com.example.plantastic.data.entities.HooldusTüüp;
 import com.example.plantastic.data.entities.TaimWithDetails;
 
 import java.util.concurrent.ExecutorService;
@@ -27,6 +29,8 @@ public class MyPlantFragment extends Fragment {
     private Button btnWater;
     private Button btnEdit;
     private ImageView selectedPlantImage;
+    private android.widget.ImageButton btnBack;
+    private android.widget.TableLayout tableCareHistory;
 
     private TaimWithDetails currentPlant;
     private boolean isEditMode = false;
@@ -54,6 +58,8 @@ public class MyPlantFragment extends Fragment {
         btnWater = view.findViewById(R.id.btnWater);
         btnEdit = view.findViewById(R.id.btnEdit);
         selectedPlantImage = view.findViewById(R.id.selectedPlantImage);
+        btnBack = view.findViewById(R.id.btnBack);
+        tableCareHistory = view.findViewById(R.id.tableCareHistory);
         db = PlantasticDatabase.getInstance(requireContext());
 
         // Get plant ID from arguments
@@ -67,6 +73,13 @@ public class MyPlantFragment extends Fragment {
         // Set up button listeners
         btnWater.setOnClickListener(v -> onWaterOrCancelClick());
         btnEdit.setOnClickListener(v -> onEditOrSaveClick());
+        btnBack.setOnClickListener(v -> {
+            if (getParentFragmentManager() != null) {
+                getParentFragmentManager().popBackStack();
+            } else if (getActivity() != null) {
+                getActivity().onBackPressed();
+            }
+        });
     }
 
     private void loadPlantDetails() {
@@ -94,7 +107,63 @@ public class MyPlantFragment extends Fragment {
 
             // Load plant image from database
             loadPlantImage();
+
+            // Load care history table
+            loadCareHistory();
         }
+    }
+
+    private void loadCareHistory() {
+        if (currentPlant == null || currentPlant.taim == null) return;
+        executorService.execute(() -> {
+            try {
+                final java.util.List<com.example.plantastic.data.entities.HooldusAjalugu> history = db.hooldusAjaluguDao().getByTaimId(currentPlant.taim.id);
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    // keep header (index 0), remove others
+                    int count = tableCareHistory.getChildCount();
+                    for (int i = count - 1; i >= 1; i--) {
+                        tableCareHistory.removeViewAt(i);
+                    }
+
+                    java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+
+                    if (history != null) {
+                        for (com.example.plantastic.data.entities.HooldusAjalugu item : history) {
+                            android.widget.TableRow row = new android.widget.TableRow(requireContext());
+                            android.widget.TextView typeTv = new android.widget.TextView(requireContext());
+                            android.widget.TextView dateTv = new android.widget.TextView(requireContext());
+
+                            String typeName = "-";
+                            try {
+                                if (item.hooldusTüüp_id != null) {
+                                    com.example.plantastic.data.entities.HooldusTüüp t = db.hooldusTüüpDao().getById(item.hooldusTüüp_id);
+                                    if (t != null) typeName = t.nimetus;
+                                }
+                            } catch (Exception ex) { /* ignore */ }
+
+                            typeTv.setText(typeName);
+                            dateTv.setText(fmt.format(new java.util.Date(item.aeg)));
+
+                            // Ensure columns match header weights
+                            android.widget.TableRow.LayoutParams lp = new android.widget.TableRow.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                            typeTv.setLayoutParams(lp);
+                            dateTv.setLayoutParams(lp);
+
+                            int padding = (int) (8 * requireContext().getResources().getDisplayMetrics().density);
+                            typeTv.setPadding(padding,padding,padding,padding);
+                            dateTv.setPadding(padding,padding,padding,padding);
+
+                            row.addView(typeTv, lp);
+                            row.addView(dateTv, lp);
+                            tableCareHistory.addView(row);
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                // ignore
+            }
+        });
     }
 
     private void loadPlantImage() {
@@ -213,7 +282,38 @@ public class MyPlantFragment extends Fragment {
 
     private void waterPlant() {
         if (currentPlant != null && currentPlant.taim != null) {
-            Toast.makeText(requireContext(), "Kastetud", Toast.LENGTH_SHORT).show();
+            executorService.execute(() -> {
+                try {
+                    HooldusTüüp kastmineType = db.hooldusTüüpDao().getByName("Kastmine");
+                    if (kastmineType == null) {
+                        HooldusTüüp createdType = new HooldusTüüp();
+                        createdType.nimetus = "Kastmine";
+                        long typeId = db.hooldusTüüpDao().insert(createdType);
+                        createdType.id = (int) typeId;
+                        kastmineType = createdType;
+                    }
+
+                    HooldusAjalugu history = new HooldusAjalugu();
+                    history.taim_id = currentPlant.taim.id;
+                    history.hooldusTüüp_id = kastmineType.id;
+                    history.aeg = System.currentTimeMillis();
+                    history.kommentaar = "Kastetud";
+                    db.hooldusAjaluguDao().insert(history);
+
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(requireContext(), "Kastetud", Toast.LENGTH_SHORT).show();
+                                loadCareHistory();
+                        });
+                    }
+                } catch (Exception ex) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() ->
+                                Toast.makeText(requireContext(), "Kastmise salvestamine ebaõnnestus", Toast.LENGTH_SHORT).show()
+                        );
+                    }
+                }
+            });
         }
     }
 

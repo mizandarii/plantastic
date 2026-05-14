@@ -24,7 +24,7 @@ public class Teade {
 
     public long aeg;
 
-    public int hooldusTüüp_id;
+    public Integer hooldusTüüp_id;
 
     public String kommentaar;
 }

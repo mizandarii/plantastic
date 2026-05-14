@@ -32,6 +32,15 @@ public class PlantResponse implements Serializable {
         @SerializedName("family")
         private String family;
 
+        @SerializedName("care_level")
+        private String careLevel;
+
+        @SerializedName("poisonous_to_pets")
+        private JsonElement poisonousToPets;
+
+        @SerializedName("care_guides")
+        private String careGuides;
+
         public int getId() { return id; }
         public String getCommonName() { return commonName != null ? commonName : "Unknown"; }
         
@@ -47,14 +56,24 @@ public class PlantResponse implements Serializable {
          * Returns sunlight level from 1 to 4.
          */
         public int getSunlightLevel() {
-            List<String> list = getSunlight();
-            if (list.isEmpty()) return 2;
-            String sun = list.get(0).toLowerCase();
-            if (sun.contains("full sun") || sun.contains("full_sun")) return 4;
-            if (sun.contains("part sun") || sun.contains("part_sun") || sun.contains("sun-part shade")) return 3;
-            if (sun.contains("part shade") || sun.contains("part_shade")) return 2;
-            if (sun.contains("full shade") || sun.contains("full_shade")) return 1;
-            return 2;
+                    List<String> list = getSunlight();
+                    if (list.isEmpty()) return 2;
+                    String sun = list.get(0).toLowerCase();
+
+                    // Try to parse explicit numeric levels if present
+                    for (char c : sun.toCharArray()) {
+                        if (c >= '1' && c <= '4') {
+                            return Character.getNumericValue(c);
+                        }
+                    }
+
+                    // Common phrase matching
+                    if (sun.contains("full sun") || sun.contains("full_sun") || sun.contains("very bright") || sun.contains("high")) return 4;
+                    if (sun.contains("part sun") || sun.contains("part_sun") || sun.contains("sun-part shade") || sun.contains("moderate") || sun.contains("medium")) return 3;
+                    if (sun.contains("part shade") || sun.contains("part_shade") || sun.contains("partial shade") || sun.contains("low")) return 2;
+                    if (sun.contains("full shade") || sun.contains("full_shade") || sun.contains("shade")) return 1;
+
+                    return 2; // default
         }
 
         private List<String> convertJsonToList(JsonElement element) {
@@ -73,6 +92,27 @@ public class PlantResponse implements Serializable {
         public DefaultImage getDefaultImage() { return defaultImage; }
         public String getWatering() { return watering != null ? watering : "average"; }
         public String getFamily() { return family != null ? family : "General"; }
+        public String getCareLevel() { return careLevel != null ? careLevel : "Unknown"; }
+        public String getCareGuides() { return careGuides; }
+
+        public String getPoisonousToPetsText() {
+            if (poisonousToPets == null || poisonousToPets.isJsonNull()) return "Unknown";
+            if (poisonousToPets.isJsonPrimitive()) {
+                if (poisonousToPets.getAsJsonPrimitive().isBoolean()) {
+                    return poisonousToPets.getAsBoolean() ? "Yes" : "No";
+                }
+                if (poisonousToPets.getAsJsonPrimitive().isNumber()) {
+                    return poisonousToPets.getAsInt() != 0 ? "Yes" : "No";
+                }
+                String value = poisonousToPets.getAsString();
+                if (value == null) return "Unknown";
+                String normalized = value.trim().toLowerCase();
+                if (normalized.equals("1") || normalized.equals("true") || normalized.equals("yes")) return "Yes";
+                if (normalized.equals("0") || normalized.equals("false") || normalized.equals("no")) return "No";
+                return value;
+            }
+            return poisonousToPets.toString();
+        }
     }
 
     public static class DefaultImage implements Serializable {

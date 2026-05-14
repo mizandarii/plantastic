@@ -12,11 +12,23 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.plantastic.api.PerenualService;
 import com.example.plantastic.api.PlantResponse;
+import com.example.plantastic.api.PlantCareGuideResponse;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class EncyclopediaItemFragment extends Fragment {
 
     private static final String ARG_PLANT = "arg_plant";
+    private static final String BASE_URL = "https://perenual.com/";
     private PlantResponse.PlantData plant;
 
     public static EncyclopediaItemFragment newInstance(PlantResponse.PlantData plant) {
@@ -56,16 +68,20 @@ public class EncyclopediaItemFragment extends Fragment {
         ImageView plantImage = view.findViewById(R.id.plantImage);
         TextView commonNameText = view.findViewById(R.id.commonNameText);
         TextView descriptionText = view.findViewById(R.id.descriptionText);
-        TextView originText = view.findViewById(R.id.originText);
+        TextView careLevelText = view.findViewById(R.id.careLevel);
+        TextView toxicToPetsText = view.findViewById(R.id.toxicToPets);
 
         commonNameText.setText(plant.getCommonName());
-        
-        // Use scientific name as description or family if needed, or if there's a real description in API (not in this version of PlantData)
         if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
             descriptionText.setText("Scientific name: " + plant.getScientificName().get(0));
         }
 
-        originText.setText(plant.getFamily());
+        careLevelText.setText(plant.getCareLevel());
+        toxicToPetsText.setText(plant.getPoisonousToPetsText());
+
+        if (plant.getCareGuides() != null && !plant.getCareGuides().isEmpty()) {
+            loadCareGuide(plant.getCareGuides(), descriptionText);
+        }
 
         if (plant.getDefaultImage() != null) {
             Glide.with(this)
@@ -86,19 +102,55 @@ public class EncyclopediaItemFragment extends Fragment {
         if (sun3 != null) sun3.setAlpha(level >= 3 ? 1.0f : 0.3f);
         if (sun4 != null) sun4.setAlpha(level >= 4 ? 1.0f : 0.3f);
 
-        // Watering logic (assuming 1-5 scale for drops as in XML)
+        // Watering logic (3 drops in the updated XML)
         int waterLevel = mapWateringToLevel(plant.getWatering());
         ImageView drop1 = view.findViewById(R.id.drop1);
         ImageView drop2 = view.findViewById(R.id.drop2);
         ImageView drop3 = view.findViewById(R.id.drop3);
-        ImageView drop4 = view.findViewById(R.id.drop4);
-        ImageView drop5 = view.findViewById(R.id.drop5);
 
         if (drop1 != null) drop1.setAlpha(waterLevel >= 1 ? 1.0f : 0.3f);
         if (drop2 != null) drop2.setAlpha(waterLevel >= 2 ? 1.0f : 0.3f);
         if (drop3 != null) drop3.setAlpha(waterLevel >= 3 ? 1.0f : 0.3f);
-        if (drop4 != null) drop4.setAlpha(waterLevel >= 4 ? 1.0f : 0.3f);
-        if (drop5 != null) drop5.setAlpha(waterLevel >= 5 ? 1.0f : 0.3f);
+    }
+
+    private void loadCareGuide(String url, TextView descriptionText) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        PerenualService service = retrofit.create(PerenualService.class);
+        service.getCareGuide(url).enqueue(new Callback<PlantCareGuideResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<PlantCareGuideResponse> call, @NonNull Response<PlantCareGuideResponse> response) {
+                if (!response.isSuccessful() || response.body() == null) return;
+
+                List<PlantCareGuideResponse.CareGuideItem> guides = response.body().getData();
+                if (guides.isEmpty()) return;
+
+                PlantCareGuideResponse.CareGuideItem guide = guides.get(0);
+                List<PlantCareGuideResponse.CareGuideSection> sections = guide.getSection();
+                if (sections.isEmpty()) return;
+
+                List<String> parts = new ArrayList<>();
+                for (PlantCareGuideResponse.CareGuideSection section : sections) {
+                    String type = section.getType();
+                    String description = section.getDescription();
+                    if (!type.isEmpty() && !description.isEmpty()) {
+                        parts.add(type.substring(0, 1).toUpperCase() + type.substring(1) + ": " + description);
+                    }
+                }
+
+                if (!parts.isEmpty() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> descriptionText.setText(String.join("\n\n", parts)));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<PlantCareGuideResponse> call, @NonNull Throwable t) {
+                // Keep existing fallback text if the care guide fetch fails.
+            }
+        });
     }
 
     private int mapWateringToLevel(String watering) {
@@ -106,9 +158,9 @@ public class EncyclopediaItemFragment extends Fragment {
         switch (watering.toLowerCase()) {
             case "none": return 0;
             case "minimum": return 1;
-            case "average": return 3;
-            case "frequent": return 5;
-            default: return 3;
+            case "average": return 2;
+            case "frequent": return 3;
+            default: return 2;
         }
     }
 }
