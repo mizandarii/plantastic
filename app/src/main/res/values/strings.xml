@@ -16,6 +16,10 @@
     <string name="add_photo">Add photo</string>
     <string name="nickname_label">Nimi:</string>
     <string name="enter_nickname">Enter plant nickname</string>
+    <string name="common_name_label">Common name</string>
+    <string name="edit_plant">Edit plant</string>
+    <string name="delete_plant">Delete plant</string>
+    <string name="water_indicator">Water indicator</string>
     <string name="type_label">Tüüp:</string>
     <string name="enter_species">Enter plant species</string>
     <string name="description_label">Kirjeldus (Valik.):</string>

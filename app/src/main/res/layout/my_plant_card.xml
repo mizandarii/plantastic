@@ -22,6 +22,7 @@
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:background="@color/tekstEnts"
+            android:contentDescription="@string/selected_plant_image"
             android:scaleType="centerCrop"
             android:src="@mipmap/ic_launcher" />
 
@@ -36,7 +37,7 @@
                 android:id="@+id/nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nickname"
+                android:text="@string/nickname_label"
                 android:textColor="@color/daark_green"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -44,17 +45,10 @@
                 android:id="@+id/common_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Common Name"
+                android:text="@string/common_name_label"
                 android:textColor="@color/daark_green"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/scientific_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Scientific Name"
-                android:textColor="@color/daark_green"
-                android:textSize="12sp"
-                android:textStyle="italic" />
+                android:textSize="14sp"
+                android:visibility="visible" />
         </LinearLayout>
 
         <ImageView
@@ -64,6 +58,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:contentDescription="@string/water_indicator"
             android:src="@drawable/ic_drop"
             app:tint="@color/daark_green" />
 
@@ -74,6 +69,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:contentDescription="@string/edit_plant"
             android:src="@drawable/ic_edit"
             app:tint="@color/daark_green" />
 
@@ -84,6 +80,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
+            android:contentDescription="@string/delete_plant"
             android:src="@drawable/ic_delete"
             app:tint="@color/daark_green" />
 

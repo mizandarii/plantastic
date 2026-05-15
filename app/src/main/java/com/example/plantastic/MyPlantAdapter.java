@@ -18,13 +18,19 @@ import java.util.List;
 public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantViewHolder> {
 
     private List<TaimWithDetails> plants = new ArrayList<>();
-    private final OnPlantClickListener listener;
+    private final OnPlantActionListener listener;
 
-    public interface OnPlantClickListener {
+    public interface OnPlantActionListener {
         void onPlantClick(TaimWithDetails plant);
+
+        void onWaterClick(TaimWithDetails plant);
+
+        void onEditClick(TaimWithDetails plant);
+
+        void onDeleteClick(TaimWithDetails plant);
     }
 
-    public MyPlantAdapter(OnPlantClickListener listener) {
+    public MyPlantAdapter(OnPlantActionListener listener) {
         this.listener = listener;
     }
 
@@ -40,10 +46,15 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
         TaimWithDetails plantWithDetails = plants.get(position);
         
         holder.nickname.setText(plantWithDetails.taim.nimi);
-        holder.commonName.setVisibility(View.GONE);
-        holder.scientificName.setVisibility(View.GONE);
+        if (plantWithDetails.sort != null && !plantWithDetails.sort.nimetus.isEmpty()) {
+            holder.commonName.setText(plantWithDetails.sort.nimetus);
+            holder.commonName.setVisibility(View.VISIBLE);
+        } else {
+            holder.commonName.setText("");
+            holder.commonName.setVisibility(View.GONE);
+        }
 
-        if (plantWithDetails.fotos != null && !plantWithDetails.fotos.isEmpty() && plantWithDetails.fotos.get(0).foto != null) {
+        if (plantWithDetails.fotos != null && !plantWithDetails.fotos.isEmpty()) {
             Glide.with(holder.itemView)
                     .load(plantWithDetails.fotos.get(0).foto)
                     .placeholder(R.drawable.ic_flower)
@@ -60,10 +71,19 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
         });
         
         holder.editButton.setOnClickListener(v -> {
-            // Handle edit
+            if (listener != null) {
+                listener.onEditClick(plantWithDetails);
+            }
         });
         holder.deleteButton.setOnClickListener(v -> {
-            // Handle delete
+            if (listener != null) {
+                listener.onDeleteClick(plantWithDetails);
+            }
+        });
+        holder.dropButton.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onWaterClick(plantWithDetails);
+            }
         });
     }
 
@@ -81,7 +101,6 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
         ImageView plantImage;
         TextView nickname;
         TextView commonName;
-        TextView scientificName;
         ImageView editButton;
         ImageView deleteButton;
         ImageView dropButton;
@@ -91,7 +110,6 @@ public class MyPlantAdapter extends RecyclerView.Adapter<MyPlantAdapter.MyPlantV
             plantImage = itemView.findViewById(R.id.selectedPlantImage);
             nickname = itemView.findViewById(R.id.nickname);
             commonName = itemView.findViewById(R.id.common_name);
-            scientificName = itemView.findViewById(R.id.scientific_name);
             editButton = itemView.findViewById(R.id.edit);
             deleteButton = itemView.findViewById(R.id.delete);
             dropButton = itemView.findViewById(R.id.drop);

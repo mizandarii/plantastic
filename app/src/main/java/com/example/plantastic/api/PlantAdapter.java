@@ -45,12 +45,9 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
             holder.commonName.setText(plant.getCommonName());
         }
 
-        if (holder.scientificName != null) {
-            if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
-                holder.scientificName.setText(plant.getScientificName().get(0));
-            } else {
-                holder.scientificName.setText("");
-            }
+        if (holder.commonName != null) {
+            holder.commonName.setText(plant.getCommonName());
+            holder.commonName.setVisibility(View.VISIBLE);
         }
 
         if (holder.plantImage != null) {
@@ -96,7 +93,6 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
         ImageView plantImage;
         TextView nickname;
         TextView commonName;
-        TextView scientificName;
         ImageView dropButton;
         ImageView editButton;
         ImageView deleteButton;
@@ -108,7 +104,6 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
             plantImage = itemView.findViewById(R.id.selectedPlantImage);
             nickname = itemView.findViewById(R.id.nickname);
             commonName = itemView.findViewById(R.id.common_name);
-            scientificName = itemView.findViewById(R.id.scientific_name);
             dropButton = itemView.findViewById(R.id.drop);
             editButton = itemView.findViewById(R.id.edit);
             deleteButton = itemView.findViewById(R.id.delete);

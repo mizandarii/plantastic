@@ -38,6 +38,7 @@ public class MyPlantFragment extends Fragment {
     private PlantasticDatabase db;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private int plantId;
+    private boolean startInEditMode = false;
 
     // Store original values for canceling edits
     private String originalNickname;
@@ -66,6 +67,7 @@ public class MyPlantFragment extends Fragment {
         // Get plant ID from arguments
         if (getArguments() != null) {
             plantId = getArguments().getInt("plantId", -1);
+            startInEditMode = getArguments().getBoolean("startInEditMode", false);
             if (plantId != -1) {
                 loadPlantDetails();
             }
@@ -111,6 +113,11 @@ public class MyPlantFragment extends Fragment {
 
             // Load care history table
             loadCareHistory();
+
+            if (startInEditMode) {
+                startInEditMode = false;
+                enterEditMode();
+            }
         }
     }
 
