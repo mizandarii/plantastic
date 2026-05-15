@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,9 +20,14 @@ import com.bumptech.glide.Glide;
 import com.example.plantastic.api.PerenualService;
 import com.example.plantastic.api.PlantResponse;
 import com.example.plantastic.api.PlantCareGuideResponse;
+import com.example.plantastic.data.PlantasticDatabase;
+import com.example.plantastic.data.entities.Kasutaja;
+import com.example.plantastic.data.entities.LemmikTaim;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -32,10 +38,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class EncyclopediaItemFragment extends Fragment {
 
     private static final String ARG_PLANT = "arg_plant";
+    private static final String ARG_PLANT_ID = "arg_plant_id";
     private static final String BASE_URL = "https://perenual.com/api/";
     private PlantResponse.PlantData plant;
+    private int requestedPlantId = -1;
     private String apiKey;
     private PerenualService apiService;
+    private PlantasticDatabase db;
+    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
+    private ImageButton favoriteButton;
+    private boolean isFavorite;
 
     public static EncyclopediaItemFragment newInstance(PlantResponse.PlantData plant) {
         EncyclopediaItemFragment fragment = new EncyclopediaItemFragment();
@@ -45,11 +57,23 @@ public class EncyclopediaItemFragment extends Fragment {
         return fragment;
     }
 
+    public static EncyclopediaItemFragment newInstanceById(int plantId) {
+        EncyclopediaItemFragment fragment = new EncyclopediaItemFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_PLANT_ID, plantId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             plant = (PlantResponse.PlantData) getArguments().getSerializable(ARG_PLANT);
+            requestedPlantId = getArguments().getInt(ARG_PLANT_ID, -1);
+            if (plant != null) {
+                requestedPlantId = plant.getId();
+            }
         }
     }
 
@@ -63,9 +87,11 @@ public class EncyclopediaItemFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        if (plant == null) return;
+        if (plant == null && requestedPlantId <= 0) return;
 
         ImageView backButton = view.findViewById(R.id.backButton);
+        favoriteButton = view.findViewById(R.id.favoriteButton);
+        db = PlantasticDatabase.getInstance(requireContext());
 
         if (backButton != null) {
             backButton.setOnClickListener(v -> getParentFragmentManager().popBackStack());
@@ -73,16 +99,24 @@ public class EncyclopediaItemFragment extends Fragment {
 
         setupRetrofit();
         loadApiKey();
+        loadFavoriteState();
+
+        if (favoriteButton != null) {
+            favoriteButton.setOnClickListener(v -> toggleFavorite());
+        }
 
         // Render whatever we already have immediately, then upgrade to the full detail record.
-        bindPlantData(view, plant);
+        if (plant != null) {
+            bindPlantData(view, plant);
+        }
 
-        if (apiKey != null && !apiKey.isEmpty() && apiService != null) {
-            apiService.getSpeciesDetails(plant.getId(), apiKey).enqueue(new Callback<>() {
+        if (apiKey != null && !apiKey.isEmpty() && apiService != null && requestedPlantId > 0) {
+            apiService.getSpeciesDetails(requestedPlantId, apiKey).enqueue(new Callback<>() {
                 @Override
                 public void onResponse(@NonNull Call<PlantResponse.PlantData> call, @NonNull Response<PlantResponse.PlantData> response) {
                     if (!isAdded() || response.body() == null || !response.isSuccessful()) return;
                     plant = response.body();
+                    requestedPlantId = plant.getId();
                     bindPlantData(view, plant);
                 }
 
@@ -169,6 +203,89 @@ public class EncyclopediaItemFragment extends Fragment {
         if (drop3 != null) drop3.setAlpha(waterLevel >= 3 ? 1.0f : 0.3f);
     }
 
+    private void loadFavoriteState() {
+        if (db == null || requestedPlantId <= 0) return;
+
+        dbExecutor.execute(() -> {
+            try {
+                Kasutaja user = db.kasutajaDao().getFirstUser();
+                if (user == null) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> setFavoriteUi(false));
+                    }
+                    return;
+                }
+
+                LemmikTaim favorite = db.lemmikTaimDao().getById(requestedPlantId);
+                boolean isFavorited = favorite != null && favorite.kasutaja_id == user.id;
+
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> setFavoriteUi(isFavorited));
+                }
+            } catch (Exception ex) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> setFavoriteUi(false));
+                }
+            }
+        });
+    }
+
+    private void toggleFavorite() {
+        if (db == null || requestedPlantId <= 0) return;
+
+        dbExecutor.execute(() -> {
+            try {
+                Kasutaja user = db.kasutajaDao().getFirstUser();
+                if (user == null) {
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() ->
+                                Toast.makeText(requireContext(), "No user found", Toast.LENGTH_SHORT).show()
+                        );
+                    }
+                    return;
+                }
+
+                LemmikTaim existing = db.lemmikTaimDao().getById(requestedPlantId);
+                boolean shouldBeFavorite;
+
+                if (existing != null && existing.kasutaja_id == user.id) {
+                    db.lemmikTaimDao().delete(existing);
+                    shouldBeFavorite = false;
+                } else {
+                    if (existing != null) {
+                        // Replace stale favorite row if it belongs to a different user.
+                        db.lemmikTaimDao().delete(existing);
+                    }
+
+                    LemmikTaim favorite = new LemmikTaim();
+                    favorite.api_taim_id = requestedPlantId;
+                    favorite.nimetus = (plant != null && plant.getCommonName() != null) ? plant.getCommonName() : "Unknown";
+                    favorite.img_url = (plant != null && plant.getDefaultImage() != null) ? plant.getDefaultImage().getThumbnail() : null;
+                    favorite.kasutaja_id = user.id;
+                    db.lemmikTaimDao().insert(favorite);
+                    shouldBeFavorite = true;
+                }
+
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> setFavoriteUi(shouldBeFavorite));
+                }
+            } catch (Exception ex) {
+                Log.e("ENCYCLOPEDIA_ITEM", "Failed to toggle favorite", ex);
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(requireContext(), "Could not update favorites", Toast.LENGTH_SHORT).show()
+                    );
+                }
+            }
+        });
+    }
+
+    private void setFavoriteUi(boolean favorited) {
+        isFavorite = favorited;
+        if (favoriteButton == null) return;
+        favoriteButton.setImageResource(favorited ? R.drawable.ic_heart : R.drawable.ic_heart_outline);
+    }
+
     private void loadCareGuide(String url, TextView descriptionText) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
@@ -207,6 +324,12 @@ public class EncyclopediaItemFragment extends Fragment {
                 // Keep existing fallback text if the care guide fetch fails.
             }
         });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        favoriteButton = null;
     }
 
 }

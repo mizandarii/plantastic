@@ -12,6 +12,7 @@
     <string name="seaded">Seaded</string>
     <string name="tere">Tere!</string>
     <string name="lemmikud">Lemmikud</string>
+    <string name="no_favorites_yet">No favorite plants yet</string>
     <string name="selected_plant_image">Selected plant image</string>
     <string name="add_photo">Add photo</string>
     <string name="nickname_label">Nimi:</string>
@@ -20,6 +21,8 @@
     <string name="edit_plant">Edit plant</string>
     <string name="delete_plant">Delete plant</string>
     <string name="water_indicator">Water indicator</string>
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="open_encyclopedia">Encyclopedia</string>
     <string name="type_label">Tüüp:</string>
     <string name="enter_species">Enter plant species</string>
     <string name="description_label">Kirjeldus (Valik.):</string>

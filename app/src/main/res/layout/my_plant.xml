@@ -30,13 +30,28 @@
                 android:src="@drawable/weui_arrow_filled__1_" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:layout_weight="1"
                 android:text="Minu taim"
                 android:textColor="@color/black"
                 android:textSize="22sp"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnEncyclopedia"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="12dp"
+                android:backgroundTint="@color/btncolor"
+                android:minHeight="40dp"
+                android:minWidth="48dp"
+                android:text="@string/open_encyclopedia"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                app:cornerRadius="12dp" />
         </LinearLayout>
 
         <!-- Plant Picture -->

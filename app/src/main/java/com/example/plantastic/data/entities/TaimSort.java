@@ -17,6 +17,8 @@ public class TaimSort {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
+    public int api_taim_id;
+
     @NonNull
     public String ladinakeelne_nimetus;
 

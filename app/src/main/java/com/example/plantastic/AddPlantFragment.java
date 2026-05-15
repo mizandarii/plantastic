@@ -313,6 +313,7 @@ public class AddPlantFragment extends Fragment {
                 }
 
                 TaimSort sort = new TaimSort();
+                sort.api_taim_id = plantDetails.getId();
                 sort.nimetus = plantDetails.getCommonName();
                 List<String> scientificNames = plantDetails.getScientificName();
                 sort.ladinakeelne_nimetus = (scientificNames != null && !scientificNames.isEmpty())

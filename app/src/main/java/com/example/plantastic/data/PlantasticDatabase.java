@@ -18,13 +18,14 @@ import java.util.concurrent.Executors;
                 Taim.class,
                 TaimLiik.class,
                 TaimSort.class,
+                LemmikTaim.class,
                 HooldusTüüp.class,
                 HooldusAjalugu.class,
                 Teade.class,
                 Fotod.class,
                 KastmisVajadusIntervall.class
         },
-        version = 9,
+        version = 11,
         exportSchema = false
 )
 public abstract class PlantasticDatabase extends RoomDatabase {
@@ -34,6 +35,7 @@ public abstract class PlantasticDatabase extends RoomDatabase {
 
     public abstract KasutajaDao kasutajaDao();
     public abstract TaimDao taimDao();
+    public abstract LemmikTaimDao lemmikTaimDao();
     public abstract HooldusAjaluguDao hooldusAjaluguDao();
     public abstract TeadeDao teadeDao();
     public abstract FotodDao fotodDao();

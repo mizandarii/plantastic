@@ -29,6 +29,7 @@ public class MyPlantFragment extends Fragment {
     private EditText editDescription;
     private Button btnWater;
     private Button btnEdit;
+    private Button btnEncyclopedia;
     private ImageView selectedPlantImage;
     private android.widget.ImageButton btnBack;
     private android.widget.TableLayout tableCareHistory;
@@ -59,6 +60,7 @@ public class MyPlantFragment extends Fragment {
         editDescription = view.findViewById(R.id.editDescription);
         btnWater = view.findViewById(R.id.btnWater);
         btnEdit = view.findViewById(R.id.btnEdit);
+        btnEncyclopedia = view.findViewById(R.id.btnEncyclopedia);
         selectedPlantImage = view.findViewById(R.id.selectedPlantImage);
         btnBack = view.findViewById(R.id.btnBack);
         tableCareHistory = view.findViewById(R.id.tableCareHistory);
@@ -76,6 +78,9 @@ public class MyPlantFragment extends Fragment {
         // Set up button listeners
         btnWater.setOnClickListener(v -> onWaterOrCancelClick());
         btnEdit.setOnClickListener(v -> onEditOrSaveClick());
+        if (btnEncyclopedia != null) {
+            btnEncyclopedia.setOnClickListener(v -> openEncyclopediaPage());
+        }
         btnBack.setOnClickListener(v -> {
             if (getParentFragmentManager() != null) {
                 getParentFragmentManager().popBackStack();
@@ -113,6 +118,12 @@ public class MyPlantFragment extends Fragment {
 
             // Load care history table
             loadCareHistory();
+
+            if (btnEncyclopedia != null) {
+                btnEncyclopedia.setVisibility(
+                        currentPlant.sort != null && currentPlant.sort.api_taim_id > 0 ? View.VISIBLE : View.GONE
+                );
+            }
 
             if (startInEditMode) {
                 startInEditMode = false;
@@ -405,6 +416,19 @@ public class MyPlantFragment extends Fragment {
                 db.taimDao().update(currentPlant.taim);
             }
         });
+    }
+
+    private void openEncyclopediaPage() {
+        if (currentPlant == null || currentPlant.sort == null || currentPlant.sort.api_taim_id <= 0) {
+            Toast.makeText(requireContext(), "No encyclopedia page linked for this plant", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EncyclopediaItemFragment fragment = EncyclopediaItemFragment.newInstanceById(currentPlant.sort.api_taim_id);
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.frame_layout, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }
 
