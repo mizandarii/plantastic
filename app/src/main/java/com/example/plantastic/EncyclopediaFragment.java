@@ -33,7 +33,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class EncyclopediaFragment extends Fragment {
 
     private String apiKey;
-    private static final String BASE_URL = "https://perenual.com/";
+    private static final String BASE_URL = "https://perenual.com/api/";
 
     private SearchView searchView;
     private RecyclerView recyclerView;
@@ -215,7 +215,7 @@ public class EncyclopediaFragment extends Fragment {
         isLoading = true;
         if (progressBar != null && currentPage == 1) progressBar.setVisibility(View.VISIBLE);
 
-        apiService.searchPlants(apiKey, query).enqueue(new Callback<PlantResponse>() {
+        apiService.searchPlants(apiKey, query).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<PlantResponse> call, @NonNull Response<PlantResponse> response) {
                 isLoading = false;

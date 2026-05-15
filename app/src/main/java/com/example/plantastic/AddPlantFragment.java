@@ -55,7 +55,7 @@ import static android.app.Activity.RESULT_OK;
 public class AddPlantFragment extends Fragment {
 
     private String apiKey;
-    private static final String BASE_URL = "https://perenual.com/";
+    private static final String BASE_URL = "https://perenual.com/api/";
 
     private SearchView searchView;
     private RecyclerView recyclerView;
@@ -167,7 +167,7 @@ public class AddPlantFragment extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                if (query.trim().length() > 0) {
+                if (!query.trim().isEmpty()) {
                     searchPlants(query.trim());
                 }
                 return true;
@@ -339,7 +339,7 @@ public class AddPlantFragment extends Fragment {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         Log.d("SEARCH_DEBUG", "Starting search for: " + query);
 
-        apiService.searchPlants(apiKey, query).enqueue(new Callback<PlantResponse>() {
+        apiService.searchPlants(apiKey, query).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<PlantResponse> call, @NonNull Response<PlantResponse> response) {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);

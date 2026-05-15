@@ -1,11 +1,15 @@
 package com.example.plantastic;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,8 +32,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class EncyclopediaItemFragment extends Fragment {
 
     private static final String ARG_PLANT = "arg_plant";
-    private static final String BASE_URL = "https://perenual.com/";
+    private static final String BASE_URL = "https://perenual.com/api/";
     private PlantResponse.PlantData plant;
+    private String apiKey;
+    private PerenualService apiService;
 
     public static EncyclopediaItemFragment newInstance(PlantResponse.PlantData plant) {
         EncyclopediaItemFragment fragment = new EncyclopediaItemFragment();
@@ -65,33 +71,84 @@ public class EncyclopediaItemFragment extends Fragment {
             backButton.setOnClickListener(v -> getParentFragmentManager().popBackStack());
         }
 
+        setupRetrofit();
+        loadApiKey();
+
+        // Render whatever we already have immediately, then upgrade to the full detail record.
+        bindPlantData(view, plant);
+
+        if (apiKey != null && !apiKey.isEmpty() && apiService != null) {
+            apiService.getSpeciesDetails(plant.getId(), apiKey).enqueue(new Callback<>() {
+                @Override
+                public void onResponse(@NonNull Call<PlantResponse.PlantData> call, @NonNull Response<PlantResponse.PlantData> response) {
+                    if (!isAdded() || response.body() == null || !response.isSuccessful()) return;
+                    plant = response.body();
+                    bindPlantData(view, plant);
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<PlantResponse.PlantData> call, @NonNull Throwable t) {
+                    Log.e("ENCYCLOPEDIA_ITEM", "Failed to load species details: " + t.getMessage());
+                }
+            });
+        }
+    }
+
+    private void setupRetrofit() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        apiService = retrofit.create(PerenualService.class);
+    }
+
+    private void loadApiKey() {
+        try {
+            ApplicationInfo ai = requireContext().getPackageManager().getApplicationInfo(
+                    requireContext().getPackageName(), PackageManager.GET_META_DATA);
+            apiKey = ai.metaData.getString("perenual_api_key");
+            if (apiKey != null) {
+                apiKey = apiKey.replace("\"", "").trim();
+            }
+        } catch (Exception e) {
+            Log.e("ENCYCLOPEDIA_ITEM", "Failed to load API key: " + e.getMessage());
+            Toast.makeText(getContext(), "API key missing", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void bindPlantData(View view, PlantResponse.PlantData data) {
+        if (data == null) return;
+
         ImageView plantImage = view.findViewById(R.id.plantImage);
         TextView commonNameText = view.findViewById(R.id.commonNameText);
+        TextView scientificNameText = view.findViewById(R.id.scientificNameText);
         TextView descriptionText = view.findViewById(R.id.descriptionText);
         TextView careLevelText = view.findViewById(R.id.careLevel);
         TextView toxicToPetsText = view.findViewById(R.id.toxicToPets);
 
-        commonNameText.setText(plant.getCommonName());
-        if (plant.getScientificName() != null && !plant.getScientificName().isEmpty()) {
-            descriptionText.setText("Scientific name: " + plant.getScientificName().get(0));
+        commonNameText.setText(data.getCommonName());
+
+        List<String> scientificNames = data.getScientificName();
+        scientificNameText.setText(scientificNames.isEmpty() ? "Unknown" : scientificNames.get(0));
+
+        String description = data.getDescription();
+        if (description != null && !description.trim().isEmpty()) {
+            descriptionText.setText(description);
+        } else {
+            descriptionText.setText("Description unavailable.");
         }
 
-        careLevelText.setText(plant.getCareLevel());
-        toxicToPetsText.setText(plant.getPoisonousToPetsText());
+        careLevelText.setText(data.getCareLevel());
+        toxicToPetsText.setText(data.getPoisonousToPetsText());
 
-        if (plant.getCareGuides() != null && !plant.getCareGuides().isEmpty()) {
-            loadCareGuide(plant.getCareGuides(), descriptionText);
-        }
-
-        if (plant.getDefaultImage() != null) {
+        if (data.getDefaultImage() != null && data.getDefaultImage().getThumbnail() != null && !data.getDefaultImage().getThumbnail().isEmpty()) {
             Glide.with(this)
-                    .load(plant.getDefaultImage().getThumbnail())
+                    .load(data.getDefaultImage().getThumbnail())
                     .placeholder(R.drawable.plant)
                     .into(plantImage);
         }
 
-        // Sunlight level logic
-        int level = plant.getSunlightLevel();
+        int level = data.getSunlightLevel();
         ImageView sun1 = view.findViewById(R.id.sun1);
         ImageView sun2 = view.findViewById(R.id.sun2);
         ImageView sun3 = view.findViewById(R.id.sun3);
@@ -102,8 +159,7 @@ public class EncyclopediaItemFragment extends Fragment {
         if (sun3 != null) sun3.setAlpha(level >= 3 ? 1.0f : 0.3f);
         if (sun4 != null) sun4.setAlpha(level >= 4 ? 1.0f : 0.3f);
 
-        // Watering logic (3 drops in the updated XML)
-        int waterLevel = mapWateringToLevel(plant.getWatering());
+        int waterLevel = mapWateringToLevel(data.getWatering());
         ImageView drop1 = view.findViewById(R.id.drop1);
         ImageView drop2 = view.findViewById(R.id.drop2);
         ImageView drop3 = view.findViewById(R.id.drop3);
@@ -120,7 +176,7 @@ public class EncyclopediaItemFragment extends Fragment {
                 .build();
 
         PerenualService service = retrofit.create(PerenualService.class);
-        service.getCareGuide(url).enqueue(new Callback<PlantCareGuideResponse>() {
+        service.getCareGuide(url).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<PlantCareGuideResponse> call, @NonNull Response<PlantCareGuideResponse> response) {
                 if (!response.isSuccessful() || response.body() == null) return;
@@ -154,8 +210,8 @@ public class EncyclopediaItemFragment extends Fragment {
     }
 
     private int mapWateringToLevel(String watering) {
-        if (watering == null) return 3;
-        switch (watering.toLowerCase()) {
+        if (watering == null) return 2;
+        switch (watering.trim().toLowerCase()) {
             case "none": return 0;
             case "minimum": return 1;
             case "average": return 2;

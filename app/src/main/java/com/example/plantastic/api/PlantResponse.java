@@ -6,12 +6,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class PlantResponse implements Serializable {
     @SerializedName("data")
     private List<PlantData> data;
 
     public List<PlantData> getData() { return data != null ? data : new ArrayList<>(); }
 
+    @SuppressWarnings("unused")
     public static class PlantData implements Serializable {
         private int id;
         @SerializedName("common_name")
@@ -41,6 +43,9 @@ public class PlantResponse implements Serializable {
         @SerializedName("care_guides")
         private String careGuides;
 
+        @SerializedName("description")
+        private String description;
+
         public int getId() { return id; }
         public String getCommonName() { return commonName != null ? commonName : "Unknown"; }
         
@@ -53,27 +58,41 @@ public class PlantResponse implements Serializable {
         }
 
         /**
-         * Returns sunlight level from 1 to 4.
+         * Returns the highest sunlight level from 1 to 4.
+         * Mapping: full_shade = 1, part_shade = 2, sun_part_shade = 3, full_sun = 4
          */
         public int getSunlightLevel() {
                     List<String> list = getSunlight();
                     if (list.isEmpty()) return 2;
-                    String sun = list.get(0).toLowerCase();
 
-                    // Try to parse explicit numeric levels if present
-                    for (char c : sun.toCharArray()) {
-                        if (c >= '1' && c <= '4') {
-                            return Character.getNumericValue(c);
+                    int maxLevel = 0;
+                    for (String sun : list) {
+                        int level = mapSunlightToLevel(sun);
+                        if (level > maxLevel) {
+                            maxLevel = level;
                         }
                     }
 
-                    // Common phrase matching
-                    if (sun.contains("full sun") || sun.contains("full_sun") || sun.contains("very bright") || sun.contains("high")) return 4;
-                    if (sun.contains("part sun") || sun.contains("part_sun") || sun.contains("sun-part shade") || sun.contains("moderate") || sun.contains("medium")) return 3;
-                    if (sun.contains("part shade") || sun.contains("part_shade") || sun.contains("partial shade") || sun.contains("low")) return 2;
-                    if (sun.contains("full shade") || sun.contains("full_shade") || sun.contains("shade")) return 1;
+                    return maxLevel > 0 ? maxLevel : 2; // default to 2 if no valid mapping found
+        }
 
-                    return 2; // default
+        private int mapSunlightToLevel(String sunlight) {
+                    if (sunlight == null) return 0;
+                    String normalized = sunlight.toLowerCase().trim();
+
+                    // Exact mapping as specified
+                    if (normalized.equals("full_sun") || normalized.contains("full sun")) return 4;
+                    if (normalized.equals("sun_part_shade") || normalized.contains("sun-part shade")) return 3;
+                    if (normalized.equals("part_shade") || normalized.contains("part shade")) return 2;
+                    if (normalized.equals("full_shade") || normalized.contains("full shade")) return 1;
+
+                    // Additional fallbacks for common variations
+                    if (normalized.contains("very bright") || normalized.contains("high") || normalized.contains("bright")) return 4;
+                    if (normalized.contains("moderate") || normalized.contains("medium")) return 3;
+                    if (normalized.contains("partial") || normalized.contains("low")) return 2;
+                    if (normalized.contains("shade") || normalized.contains("dim")) return 1;
+
+                    return 0; // unknown
         }
 
         private List<String> convertJsonToList(JsonElement element) {
@@ -94,6 +113,7 @@ public class PlantResponse implements Serializable {
         public String getFamily() { return family != null ? family : "General"; }
         public String getCareLevel() { return careLevel != null ? careLevel : "Unknown"; }
         public String getCareGuides() { return careGuides; }
+        public String getDescription() { return description != null ? description : ""; }
 
         public String getPoisonousToPetsText() {
             if (poisonousToPets == null || poisonousToPets.isJsonNull()) return "Unknown";
@@ -115,6 +135,7 @@ public class PlantResponse implements Serializable {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class DefaultImage implements Serializable {
         @SerializedName("thumbnail")
         private String thumbnail;
