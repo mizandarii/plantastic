@@ -16,15 +16,15 @@ public class SnoozeNotificationReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         int taimId = intent.getIntExtra("taim_id", -1);
         Integer hooldusTypeId = intent.getIntExtra("hooldus_type_id", 1);
-
+        
         if (taimId != -1) {
             new Thread(() -> {
                 try {
                     PlantasticDatabase db = PlantasticDatabase.getInstance(context);
-
+                    
                     // Get the notification for this plant and care type
                     Teade teade = db.teadeDao().getByTaimAndType(taimId, hooldusTypeId);
-
+                    
                     if (teade != null) {
                         // Reschedule to 1 hour from now
                         teade.aeg = System.currentTimeMillis() + SNOOZE_DURATION_MS;
@@ -38,4 +38,3 @@ public class SnoozeNotificationReceiver extends BroadcastReceiver {
         }
     }
 }
-

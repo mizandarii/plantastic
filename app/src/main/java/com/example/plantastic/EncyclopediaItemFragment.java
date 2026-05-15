@@ -159,7 +159,7 @@ public class EncyclopediaItemFragment extends Fragment {
         if (sun3 != null) sun3.setAlpha(level >= 3 ? 1.0f : 0.3f);
         if (sun4 != null) sun4.setAlpha(level >= 4 ? 1.0f : 0.3f);
 
-        int waterLevel = mapWateringToLevel(data.getWatering());
+        int waterLevel = data.getWateringLevel();
         ImageView drop1 = view.findViewById(R.id.drop1);
         ImageView drop2 = view.findViewById(R.id.drop2);
         ImageView drop3 = view.findViewById(R.id.drop3);
@@ -209,14 +209,4 @@ public class EncyclopediaItemFragment extends Fragment {
         });
     }
 
-    private int mapWateringToLevel(String watering) {
-        if (watering == null) return 2;
-        switch (watering.trim().toLowerCase()) {
-            case "none": return 0;
-            case "minimum": return 1;
-            case "average": return 2;
-            case "frequent": return 3;
-            default: return 2;
-        }
-    }
 }

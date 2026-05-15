@@ -201,6 +201,33 @@ public class AddPlantFragment extends Fragment {
         } else {
             selectedPlantImage.setImageResource(R.drawable.ic_flower);
         }
+
+        refreshSelectedPlantDetails(plant);
+    }
+
+    private void refreshSelectedPlantDetails(PlantResponse.PlantData plant) {
+        if (plant == null || apiService == null || apiKey == null || apiKey.isEmpty()) return;
+
+        apiService.getSpeciesDetails(plant.getId(), apiKey).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<PlantResponse.PlantData> call, @NonNull Response<PlantResponse.PlantData> response) {
+                if (!isAdded() || !response.isSuccessful() || response.body() == null) return;
+
+                selectedPlantData = response.body();
+                if (selectedPlantData.getDefaultImage() != null && selectedPlantData.getDefaultImage().getThumbnail() != null) {
+                    selectedApiImageUrl = selectedPlantData.getDefaultImage().getThumbnail();
+                    Glide.with(AddPlantFragment.this)
+                            .load(selectedApiImageUrl)
+                            .into(selectedPlantImage);
+                }
+                editSpecies.setText(selectedPlantData.getCommonName());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<PlantResponse.PlantData> call, @NonNull Throwable t) {
+                Log.e("DETAILS_LOAD", "Failed to refresh species details: " + t.getMessage());
+            }
+        });
     }
 
     private void showSearchList() {
@@ -254,8 +281,26 @@ public class AddPlantFragment extends Fragment {
                 Kasutaja user = db.kasutajaDao().getFirstUser();
                 int userId = (user != null) ? user.id : (int) db.kasutajaDao().insert(new Kasutaja() {{ kasutajanimi = "Primary User"; }});
 
-                String familyName = (selectedPlantData.getFamily() != null && !selectedPlantData.getFamily().isEmpty()) 
-                        ? selectedPlantData.getFamily() : "General";
+                PlantResponse.PlantData plantDetails = selectedPlantData;
+                if (apiService != null && apiKey != null && !apiKey.isEmpty() && selectedPlantData != null) {
+                    try {
+                        Response<PlantResponse.PlantData> detailsResponse = apiService.getSpeciesDetails(selectedPlantData.getId(), apiKey).execute();
+                        if (detailsResponse.isSuccessful() && detailsResponse.body() != null) {
+                            plantDetails = detailsResponse.body();
+                        }
+                    } catch (IOException e) {
+                        Log.w("DETAILS_LOAD", "Falling back to selected plant data: " + e.getMessage());
+                    }
+                }
+
+                if (plantDetails == null) {
+                    throw new IllegalStateException("Plant details are unavailable");
+                }
+
+                String familyName = plantDetails.getFamily();
+                if (familyName == null || familyName.isEmpty()) {
+                    familyName = "General";
+                }
                 TaimLiik liik = db.taimLiikDao().getByName(familyName);
                 int liikId;
                 if (liik == null) {
@@ -267,17 +312,14 @@ public class AddPlantFragment extends Fragment {
                     liikId = liik.id;
                 }
 
-                // Translate API sunlight to 1-4 level
-                int sunlightLevel = selectedPlantData.getSunlightLevel();
-
                 TaimSort sort = new TaimSort();
-                sort.nimetus = selectedPlantData.getCommonName();
-                List<String> scientificNames = selectedPlantData.getScientificName();
-                sort.ladinakeelne_nimetus = (scientificNames != null && !scientificNames.isEmpty()) 
+                sort.nimetus = plantDetails.getCommonName();
+                List<String> scientificNames = plantDetails.getScientificName();
+                sort.ladinakeelne_nimetus = (scientificNames != null && !scientificNames.isEmpty())
                         ? scientificNames.get(0) : "Unknown";
                 sort.liik_id = liikId;
-                sort.kastmisvajadus = mapWateringToIntensity(selectedPlantData.getWatering());
-                sort.valgusnoudlikkus = sunlightLevel;
+                sort.kastmisvajadus = plantDetails.getWateringLevel();
+                sort.valgusnoudlikkus = plantDetails.getSunlightLevel();
                 long sortId = db.taimSortDao().insert(sort);
 
                 Taim taim = new Taim();
@@ -314,24 +356,6 @@ public class AddPlantFragment extends Fragment {
         }).start();
     }
 
-    private int mapWateringToIntensity(String watering) {
-        if (watering == null) return 2;
-        String w = watering.toLowerCase().trim();
-
-        // Numeric values like "1", "2", "3" etc.
-        try {
-            int parsed = Integer.parseInt(w.replaceAll("[^0-9]", ""));
-            if (parsed >= 0 && parsed <= 4) return parsed;
-        } catch (Exception ignored) {}
-
-        if (w.contains("none") || w.contains("no") || w.contains("rare")) return 0;
-        if (w.contains("min") || w.contains("low") || w.contains("minimum") || w.contains("seldom") || w.contains("occasional")) return 1;
-        if (w.contains("avg") || w.contains("average") || w.contains("moderate") || w.contains("regular")) return 2;
-        if (w.contains("freq") || w.contains("frequent") || w.contains("often") || w.contains("high")) return 3;
-
-        // default fallback
-        return 2;
-    }
 
     private void searchPlants(String query) {
         if (apiKey == null || apiKey.isEmpty() || apiKey.contains("{")) return;

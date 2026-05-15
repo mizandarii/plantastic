@@ -17,7 +17,7 @@ import java.util.Set;
 
 public class CareNotificationWorker extends Worker {
     private static final String TAG = "CareNotificationWorker";
-
+    
     public CareNotificationWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
     }
@@ -28,19 +28,19 @@ public class CareNotificationWorker extends Worker {
         try {
             PlantasticDatabase db = PlantasticDatabase.getInstance(getApplicationContext());
             long now = System.currentTimeMillis();
-
+            
             // Get all notifications that are due
             List<Teade> dueNotifications = db.teadeDao().getUpcoming(now - 1000); // slight buffer
-
+            
             Set<Integer> sentPlantIds = new HashSet<>();
-
+            
             if (dueNotifications != null) {
                 for (Teade teade : dueNotifications) {
                     // Only send one notification per plant to avoid spam
                     if (!sentPlantIds.contains(teade.taim_id) && teade.aeg <= now) {
                         Taim taim = db.taimDao().getById(teade.taim_id);
                         String careType = getCareTypeName(db, teade.hooldusTüüp_id);
-
+                        
                         if (taim != null) {
                             CareNotificationManager.showCareNotification(
                                     getApplicationContext(),
@@ -54,7 +54,7 @@ public class CareNotificationWorker extends Worker {
                     }
                 }
             }
-
+            
             return Result.success();
         } catch (Exception ex) {
             Log.e(TAG, "Error checking notifications", ex);
@@ -72,4 +72,3 @@ public class CareNotificationWorker extends Worker {
         }
     }
 }
-

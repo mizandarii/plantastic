@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 public class HomeFragment extends Fragment {
     private PlantasticDatabase db;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
+    
     private LinearLayout sectionToday, sectionNext3Days, sectionNext7Days;
     private LinearLayout containerToday, containerNext3Days, containerNext7Days;
     private TextView emptyText;
@@ -41,7 +41,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         db = PlantasticDatabase.getInstance(requireContext());
-
+        
         sectionToday = view.findViewById(R.id.sectionToday);
         sectionNext3Days = view.findViewById(R.id.sectionNext3Days);
         sectionNext7Days = view.findViewById(R.id.sectionNext7Days);
@@ -49,7 +49,7 @@ public class HomeFragment extends Fragment {
         containerNext3Days = view.findViewById(R.id.containerNext3Days);
         containerNext7Days = view.findViewById(R.id.containerNext7Days);
         emptyText = view.findViewById(R.id.emptyText);
-
+        
         loadUpcomingCare();
     }
 
@@ -84,25 +84,25 @@ public class HomeFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         boolean hasAny = false;
-
+                        
                         if (!today.isEmpty()) {
                             sectionToday.setVisibility(View.VISIBLE);
                             populateContainer(containerToday, today);
                             hasAny = true;
                         }
-
+                        
                         if (!next3days.isEmpty()) {
                             sectionNext3Days.setVisibility(View.VISIBLE);
                             populateContainer(containerNext3Days, next3days);
                             hasAny = true;
                         }
-
+                        
                         if (!next7days.isEmpty()) {
                             sectionNext7Days.setVisibility(View.VISIBLE);
                             populateContainer(containerNext7Days, next7days);
                             hasAny = true;
                         }
-
+                        
                         emptyText.setVisibility(hasAny ? View.GONE : View.VISIBLE);
                     });
                 }
@@ -114,7 +114,7 @@ public class HomeFragment extends Fragment {
 
     private void populateContainer(LinearLayout container, List<Teade> teades) {
         container.removeAllViews();
-
+        
         for (Teade teade : teades) {
             View card = createCareCard(teade);
             container.addView(card);
@@ -126,7 +126,7 @@ public class HomeFragment extends Fragment {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(12, 12, 12, 12);
         card.setBackgroundResource(R.drawable.search_view_bg);
-
+        
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -139,7 +139,7 @@ public class HomeFragment extends Fragment {
         plantNameText.setTextSize(16);
         plantNameText.setTextColor(requireContext().getColor(R.color.black));
         plantNameText.setTypeface(null, android.graphics.Typeface.BOLD);
-
+        
         String plantName = getPlantNameForTeade(teade);
         plantNameText.setText(plantName != null ? plantName : "Unknown Plant");
         card.addView(plantNameText);
@@ -153,7 +153,7 @@ public class HomeFragment extends Fragment {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
         careText.setPadding(0, 8, 0, 0);
-
+        
         String careType = getCareTypeName(teade.hooldusTüüp_id);
         String dateStr = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(new Date(teade.aeg));
         careText.setText(careType + " - " + dateStr);
@@ -199,7 +199,7 @@ public class HomeFragment extends Fragment {
         args.putInt("plantId", plantId);
         MyPlantFragment fragment = new MyPlantFragment();
         fragment.setArguments(args);
-
+        
         if (getParentFragmentManager() != null) {
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.frame_layout, fragment)

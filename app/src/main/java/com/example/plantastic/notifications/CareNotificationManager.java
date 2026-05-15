@@ -24,8 +24,8 @@ public class CareNotificationManager {
                     NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notifications for plant care reminders");
-
-            NotificationManager notificationManager =
+            
+            NotificationManager notificationManager = 
                     context.getSystemService(NotificationManager.class);
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
@@ -39,7 +39,7 @@ public class CareNotificationManager {
         Intent openIntent = new Intent(context, MainActivity.class);
         openIntent.putExtra("plantId", taimId);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
+        
         PendingIntent openPendingIntent = PendingIntent.getActivity(
                 context,
                 taimId,
@@ -50,7 +50,7 @@ public class CareNotificationManager {
         Intent snoozeIntent = new Intent(context, SnoozeNotificationReceiver.class);
         snoozeIntent.putExtra("taim_id", taimId);
         snoozeIntent.putExtra("hooldus_type_id", 1); // Default to Kastmine(1) for now
-
+        
         PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(
                 context,
                 taimId + 1000,
@@ -69,11 +69,10 @@ public class CareNotificationManager {
                 .setContentIntent(openPendingIntent)
                 .addAction(R.drawable.ic_launcher_foreground, "Snooze 1h", snoozePendingIntent);
 
-        NotificationManager notificationManager =
+        NotificationManager notificationManager = 
                 context.getSystemService(NotificationManager.class);
         if (notificationManager != null) {
             notificationManager.notify(NOTIFICATION_ID + taimId, builder.build());
         }
     }
 }
-

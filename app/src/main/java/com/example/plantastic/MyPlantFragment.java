@@ -119,7 +119,7 @@ public class MyPlantFragment extends Fragment {
         executorService.execute(() -> {
             try {
                 final java.util.List<com.example.plantastic.data.entities.HooldusAjalugu> history = db.hooldusAjaluguDao().getByTaimId(currentPlant.taim.id);
-
+                
                 // Prepare data on background thread before switching to UI thread
                 java.util.List<CareHistoryItem> items = new java.util.ArrayList<>();
                 if (history != null) {
@@ -136,7 +136,7 @@ public class MyPlantFragment extends Fragment {
                         items.add(new CareHistoryItem(typeName, item.aeg));
                     }
                 }
-
+                
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
                     // keep header (index 0), remove others
@@ -153,7 +153,7 @@ public class MyPlantFragment extends Fragment {
                         android.widget.TextView timeTv = new android.widget.TextView(requireContext());
 
                         typeTv.setText(item.typeName);
-
+                        
                         java.util.Date date = new java.util.Date(item.aeg);
                         java.text.SimpleDateFormat dateFmt = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
                         java.text.SimpleDateFormat timeFmt = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
@@ -195,7 +195,7 @@ public class MyPlantFragment extends Fragment {
     private static class CareHistoryItem {
         String typeName;
         long aeg;
-
+        
         CareHistoryItem(String typeName, long aeg) {
             this.typeName = typeName;
             this.aeg = aeg;

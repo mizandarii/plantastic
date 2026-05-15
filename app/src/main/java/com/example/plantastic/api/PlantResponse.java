@@ -110,6 +110,18 @@ public class PlantResponse implements Serializable {
 
         public DefaultImage getDefaultImage() { return defaultImage; }
         public String getWatering() { return watering != null ? watering : "average"; }
+        public int getWateringLevel() {
+            String w = getWatering();
+            if (w == null) return 2;
+
+            String normalized = w.trim().toLowerCase();
+            if (normalized.contains("none")) return 0;
+            if (normalized.contains("minimum") || normalized.contains("min")) return 1;
+            if (normalized.contains("average") || normalized.contains("avg")) return 2;
+            if (normalized.contains("frequent") || normalized.contains("freq")) return 3;
+
+            return 2;
+        }
         public String getFamily() { return family != null ? family : "General"; }
         public String getCareLevel() { return careLevel != null ? careLevel : "Unknown"; }
         public String getCareGuides() { return careGuides; }
