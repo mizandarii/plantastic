@@ -224,6 +224,15 @@
                         android:text="Kuupäev"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:padding="8dp"
+                        android:text="Aeg"
+                        android:textColor="@color/white"
+                        android:textStyle="bold" />
                 </TableRow>
             </TableLayout>
         </LinearLayout>

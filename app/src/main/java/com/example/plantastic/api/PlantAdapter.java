@@ -88,6 +88,10 @@ public class PlantAdapter extends RecyclerView.Adapter<PlantAdapter.PlantViewHol
         notifyDataSetChanged();
     }
 
+    public List<PlantResponse.PlantData> getPlants() {
+        return plants;
+    }
+
     static class PlantViewHolder extends RecyclerView.ViewHolder {
         ImageView plantImage;
         TextView nickname;

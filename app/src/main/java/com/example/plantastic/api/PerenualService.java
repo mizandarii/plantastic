@@ -12,6 +12,12 @@ public interface PerenualService {
             @Query("q") String query
     );
 
+    @GET("api/species-list")
+    Call<PlantResponse> getSpeciesList(
+            @Query("key") String apiKey,
+            @Query("page") int page
+    );
+
     @GET
     Call<PlantCareGuideResponse> getCareGuide(@Url String url);
 }

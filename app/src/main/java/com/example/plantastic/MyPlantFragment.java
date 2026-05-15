@@ -18,6 +18,7 @@ import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.HooldusAjalugu;
 import com.example.plantastic.data.entities.HooldusTüüp;
 import com.example.plantastic.data.entities.TaimWithDetails;
+import com.example.plantastic.data.entities.Teade;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -118,6 +119,24 @@ public class MyPlantFragment extends Fragment {
         executorService.execute(() -> {
             try {
                 final java.util.List<com.example.plantastic.data.entities.HooldusAjalugu> history = db.hooldusAjaluguDao().getByTaimId(currentPlant.taim.id);
+
+                // Prepare data on background thread before switching to UI thread
+                java.util.List<CareHistoryItem> items = new java.util.ArrayList<>();
+                if (history != null) {
+                    for (com.example.plantastic.data.entities.HooldusAjalugu item : history) {
+                        String typeName = "-";
+                        try {
+                            if (item.hooldusTüüp_id != null) {
+                                com.example.plantastic.data.entities.HooldusTüüp t = db.hooldusTüüpDao().getById(item.hooldusTüüp_id);
+                                if (t != null) typeName = t.nimetus;
+                            }
+                        } catch (Exception ex) {
+                            android.util.Log.e("CareHistory", "Error fetching care type", ex);
+                        }
+                        items.add(new CareHistoryItem(typeName, item.aeg));
+                    }
+                }
+
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
                     // keep header (index 0), remove others
@@ -126,44 +145,61 @@ public class MyPlantFragment extends Fragment {
                         tableCareHistory.removeViewAt(i);
                     }
 
-                    java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+                    // Display prepared items on UI thread
+                    for (CareHistoryItem item : items) {
+                        android.widget.TableRow row = new android.widget.TableRow(requireContext());
+                        android.widget.TextView typeTv = new android.widget.TextView(requireContext());
+                        android.widget.TextView dateTv = new android.widget.TextView(requireContext());
+                        android.widget.TextView timeTv = new android.widget.TextView(requireContext());
 
-                    if (history != null) {
-                        for (com.example.plantastic.data.entities.HooldusAjalugu item : history) {
-                            android.widget.TableRow row = new android.widget.TableRow(requireContext());
-                            android.widget.TextView typeTv = new android.widget.TextView(requireContext());
-                            android.widget.TextView dateTv = new android.widget.TextView(requireContext());
+                        typeTv.setText(item.typeName);
 
-                            String typeName = "-";
-                            try {
-                                if (item.hooldusTüüp_id != null) {
-                                    com.example.plantastic.data.entities.HooldusTüüp t = db.hooldusTüüpDao().getById(item.hooldusTüüp_id);
-                                    if (t != null) typeName = t.nimetus;
-                                }
-                            } catch (Exception ex) { /* ignore */ }
+                        java.util.Date date = new java.util.Date(item.aeg);
+                        java.text.SimpleDateFormat dateFmt = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
+                        java.text.SimpleDateFormat timeFmt = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+                        dateTv.setText(dateFmt.format(date));
+                        timeTv.setText(timeFmt.format(date));
 
-                            typeTv.setText(typeName);
-                            dateTv.setText(fmt.format(new java.util.Date(item.aeg)));
+                        // Ensure columns match header weights
+                        android.widget.TableRow.LayoutParams lp = new android.widget.TableRow.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                        typeTv.setLayoutParams(lp);
+                        dateTv.setLayoutParams(lp);
+                        timeTv.setLayoutParams(lp);
 
-                            // Ensure columns match header weights
-                            android.widget.TableRow.LayoutParams lp = new android.widget.TableRow.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-                            typeTv.setLayoutParams(lp);
-                            dateTv.setLayoutParams(lp);
+                        int padding = (int) (8 * requireContext().getResources().getDisplayMetrics().density);
+                        typeTv.setPadding(padding, padding, padding, padding);
+                        dateTv.setPadding(padding, padding, padding, padding);
+                        timeTv.setPadding(padding, padding, padding, padding);
 
-                            int padding = (int) (8 * requireContext().getResources().getDisplayMetrics().density);
-                            typeTv.setPadding(padding,padding,padding,padding);
-                            dateTv.setPadding(padding,padding,padding,padding);
+                        // Set text appearance
+                        typeTv.setTextSize(14);
+                        dateTv.setTextSize(14);
+                        timeTv.setTextSize(14);
+                        typeTv.setTextColor(requireContext().getColor(android.R.color.black));
+                        dateTv.setTextColor(requireContext().getColor(android.R.color.black));
+                        timeTv.setTextColor(requireContext().getColor(android.R.color.black));
 
-                            row.addView(typeTv, lp);
-                            row.addView(dateTv, lp);
-                            tableCareHistory.addView(row);
-                        }
+                        row.addView(typeTv, lp);
+                        row.addView(dateTv, lp);
+                        row.addView(timeTv, lp);
+                        tableCareHistory.addView(row);
                     }
                 });
             } catch (Exception ex) {
-                // ignore
+                android.util.Log.e("CareHistory", "Error loading care history", ex);
             }
         });
+    }
+
+    // Helper class to hold care history data
+    private static class CareHistoryItem {
+        String typeName;
+        long aeg;
+
+        CareHistoryItem(String typeName, long aeg) {
+            this.typeName = typeName;
+            this.aeg = aeg;
+        }
     }
 
     private void loadPlantImage() {
@@ -284,6 +320,7 @@ public class MyPlantFragment extends Fragment {
         if (currentPlant != null && currentPlant.taim != null) {
             executorService.execute(() -> {
                 try {
+                    // Get or create "Kastmine" care type
                     HooldusTüüp kastmineType = db.hooldusTüüpDao().getByName("Kastmine");
                     if (kastmineType == null) {
                         HooldusTüüp createdType = new HooldusTüüp();
@@ -293,12 +330,16 @@ public class MyPlantFragment extends Fragment {
                         kastmineType = createdType;
                     }
 
+                    // Record care history
                     HooldusAjalugu history = new HooldusAjalugu();
                     history.taim_id = currentPlant.taim.id;
                     history.hooldusTüüp_id = kastmineType.id;
                     history.aeg = System.currentTimeMillis();
                     history.kommentaar = "Kastetud";
                     db.hooldusAjaluguDao().insert(history);
+
+                    // Schedule next notification based on plant's watering needs
+                    scheduleNextNotification(kastmineType.id);
 
                     if (isAdded()) {
                         requireActivity().runOnUiThread(() -> {
@@ -314,6 +355,40 @@ public class MyPlantFragment extends Fragment {
                     }
                 }
             });
+        }
+    }
+
+    private void scheduleNextNotification(int careTypeId) {
+        if (currentPlant == null || currentPlant.taim == null || currentPlant.sort == null) return;
+
+        long now = System.currentTimeMillis();
+        long intervalMillis = getIntervalMillisFromWateringIntensity(currentPlant.sort.kastmisvajadus);
+        long nextNotificationTime = now + intervalMillis;
+
+        // Get or create notification record
+        Teade notification = db.teadeDao().getByTaimAndType(currentPlant.taim.id, careTypeId);
+        if (notification == null) {
+            notification = new Teade();
+            notification.taim_id = currentPlant.taim.id;
+            notification.hooldusTüüp_id = careTypeId;
+            notification.aeg = nextNotificationTime;
+            notification.kommentaar = "Watering reminder";
+            db.teadeDao().insert(notification);
+        } else {
+            notification.aeg = nextNotificationTime;
+            db.teadeDao().update(notification);
+        }
+    }
+
+    private long getIntervalMillisFromWateringIntensity(int intensity) {
+        // Map watering intensity to milliseconds between waterings
+        switch (intensity) {
+            case 0: return 365L * 24 * 60 * 60 * 1000; // Never/rarely - annual
+            case 1: return 30L * 24 * 60 * 60 * 1000;  // Minimum - monthly
+            case 2: return 14L * 24 * 60 * 60 * 1000;  // Average - bi-weekly
+            case 3: return 7L * 24 * 60 * 60 * 1000;   // Frequent - weekly
+            case 4: return 5L * 60 * 1000;             // Testing - 5 minutes
+            default: return 14L * 24 * 60 * 60 * 1000; // fallback
         }
     }
 
