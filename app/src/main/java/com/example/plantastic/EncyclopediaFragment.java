@@ -186,12 +186,16 @@ public class EncyclopediaFragment extends Fragment {
                     Log.d("EncyclopediaFragment", "Loaded page " + page + " with " + results.size() + " plants");
                 } else {
                     int code = response.code();
-                    if (code == 429) {
-                        Toast.makeText(getContext(), "API Limit Reached (100 calls). Wait until tomorrow.", Toast.LENGTH_LONG).show();
-                    } else if (code == 401 || code == 403) {
-                        Toast.makeText(getContext(), "Invalid API Key. Check local.properties.", Toast.LENGTH_LONG).show();
+                    if (isAdded()) {
+                        if (code == 429) {
+                            Toast.makeText(getContext(), "API Limit Reached (100 calls). Wait until tomorrow.", Toast.LENGTH_LONG).show();
+                        } else if (code == 401 || code == 403) {
+                            Toast.makeText(getContext(), "Invalid API Key. Check local.properties.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(getContext(), "Load failed: " + code, Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(getContext(), "Load failed: " + code, Toast.LENGTH_SHORT).show();
+                        Log.w("ENCYCLOPEDIA_ERROR", "Fragment not attached; skipping Toast for load failure: " + code);
                     }
                     Log.e("ENCYCLOPEDIA_ERROR", "Status: " + code + " Error: " + response.message());
                 }
@@ -204,6 +208,8 @@ public class EncyclopediaFragment extends Fragment {
                 if (isAdded()) {
                     Log.e("ENCYCLOPEDIA_ERROR", "Network failure: " + t.getMessage());
                     Toast.makeText(getContext(), "Check internet connection", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.w("ENCYCLOPEDIA_ERROR", "Fragment not attached; skipping Toast for network failure: " + t.getMessage());
                 }
             }
         });
@@ -232,19 +238,27 @@ public class EncyclopediaFragment extends Fragment {
                     }
 
                     if (results.isEmpty()) {
-                        Toast.makeText(getContext(), "No plants found for '" + query + "'", Toast.LENGTH_SHORT).show();
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "No plants found for '" + query + "'", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.w("ENCYCLOPEDIA_ERROR", "No plants found for '" + query + "' but fragment not attached");
+                        }
                         hasMorePages = false;
                     } else if (results.size() < 20) {
                         hasMorePages = false;
                     }
                 } else {
                     int code = response.code();
-                    if (code == 429) {
-                        Toast.makeText(getContext(), "API Limit Reached (100 calls). Wait until tomorrow.", Toast.LENGTH_LONG).show();
-                    } else if (code == 401 || code == 403) {
-                        Toast.makeText(getContext(), "Invalid API Key. Check local.properties.", Toast.LENGTH_LONG).show();
+                    if (isAdded()) {
+                        if (code == 429) {
+                            Toast.makeText(getContext(), "API Limit Reached (100 calls). Wait until tomorrow.", Toast.LENGTH_LONG).show();
+                        } else if (code == 401 || code == 403) {
+                            Toast.makeText(getContext(), "Invalid API Key. Check local.properties.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(getContext(), "Search failed: " + code, Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(getContext(), "Search failed: " + code, Toast.LENGTH_SHORT).show();
+                        Log.w("ENCYCLOPEDIA_ERROR", "Fragment not attached; skipping Toast for search failure: " + code);
                     }
                     Log.e("ENCYCLOPEDIA_ERROR", "Status: " + code + " Error: " + response.message());
                 }
@@ -257,6 +271,8 @@ public class EncyclopediaFragment extends Fragment {
                 if (isAdded()) {
                     Log.e("ENCYCLOPEDIA_ERROR", "Network failure: " + t.getMessage());
                     Toast.makeText(getContext(), "Check internet connection", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.w("ENCYCLOPEDIA_ERROR", "Fragment not attached; skipping Toast for search network failure: " + t.getMessage());
                 }
             }
         });

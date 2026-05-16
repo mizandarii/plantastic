@@ -21,6 +21,8 @@ import androidx.work.WorkManager;
 import com.example.plantastic.databinding.ActivityMainBinding;
 import com.example.plantastic.notifications.CareNotificationManager;
 import com.example.plantastic.notifications.CareNotificationWorker;
+import android.content.pm.ApplicationInfo;
+import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new HomeFragment());
         }
 
+        // If the activity was started from a notification with a plantId, open that plant detail.
+        handleIntent(getIntent());
+
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
@@ -99,6 +104,113 @@ public class MainActivity extends AppCompatActivity {
                 androidx.work.ExistingPeriodicWorkPolicy.KEEP,
                 notificationWork
         );
+
+        // Debug: seed a test plant that uses the fast testing interval (1 minute)
+        boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        if (isDebuggable) {
+            new Thread(() -> {
+                try {
+                    com.example.plantastic.data.PlantasticDatabase db = com.example.plantastic.data.PlantasticDatabase.getInstance(this);
+                    // Check for an existing test plant nickname
+                    java.util.List<com.example.plantastic.data.entities.Taim> all = db.taimDao().getAll();
+                    boolean found = false;
+                    for (com.example.plantastic.data.entities.Taim t : all) {
+                        if (t.nimi != null && t.nimi.contains("TEST - kastmine")) {
+                            found = true; break;
+                        }
+                    }
+                    if (!found) {
+                        Log.d("DEBUG_SEED", "Test plant not found. Creating one...");
+                        // Ensure a user exists
+                        com.example.plantastic.data.entities.Kasutaja user = db.kasutajaDao().getFirstUser();
+                        if (user == null) {
+                            user = new com.example.plantastic.data.entities.Kasutaja();
+                            user.kasutajanimi = "Primary User";
+                            long uid = db.kasutajaDao().insert(user);
+                            user.id = (int) uid;
+                        }
+
+                        // Create a simple sort and liik
+                        com.example.plantastic.data.entities.TaimLiik liik = db.taimLiikDao().getByName("TestFamily");
+                        int liikId;
+                        if (liik == null) {
+                            liik = new com.example.plantastic.data.entities.TaimLiik();
+                            liik.nimetus = "TestFamily";
+                            liik.ladinakeelne_nimetus = "Testus";
+                            long lid = db.taimLiikDao().insert(liik);
+                            liikId = (int) lid;
+                        } else {
+                            liikId = liik.id;
+                        }
+
+                        com.example.plantastic.data.entities.TaimSort sort = new com.example.plantastic.data.entities.TaimSort();
+                        sort.api_taim_id = -1;
+                        sort.nimetus = "TEST - Kastmis-sorted";
+                        sort.ladinakeelne_nimetus = "Testus minimalis";
+                        sort.liik_id = liikId;
+                        sort.kastmisvajadus = 4; // test intensity -> 1 minute
+                        sort.valgusnoudlikkus = 2;
+                        long sortId = db.taimSortDao().insert(sort);
+
+                        com.example.plantastic.data.entities.Taim taim = new com.example.plantastic.data.entities.Taim();
+                        taim.nimi = "TEST - kastmine (1min)";
+                        taim.sort_id = (int) sortId;
+                        taim.kasutaja_id = user.id;
+                        taim.kirjeldus = "Test plant for notification demo. Delete me.";
+                        long taimId = db.taimDao().insert(taim);
+
+                        // Ensure kastmine care type exists
+                        com.example.plantastic.data.entities.HooldusTüüp kast = db.hooldusTüüpDao().getByName("Kastmine");
+                        if (kast == null) {
+                            kast = new com.example.plantastic.data.entities.HooldusTüüp();
+                            kast.nimetus = "Kastmine";
+                            long kid = db.hooldusTüüpDao().insert(kast);
+                            kast.id = (int) kid;
+                        }
+
+                        // Insert a Teade scheduled for right now (so notification shows immediately)
+                        com.example.plantastic.data.entities.Teade teade = new com.example.plantastic.data.entities.Teade();
+                        teade.taim_id = (int) taimId;
+                        teade.hooldusTüüp_id = kast.id;
+                        teade.aeg = System.currentTimeMillis(); // Due immediately for testing
+                        teade.kommentaar = "Test watering reminder (immediate)";
+                        db.teadeDao().insert(teade);
+
+                        Log.d("DEBUG_SEED", "Test plant created with ID: " + taimId + ", Teade due now.");
+
+                        // Show the notification immediately for testing
+                        Log.d("DEBUG_SEED", "Posting test notification immediately...");
+                        CareNotificationManager.showCareNotification(
+                                MainActivity.this,
+                                (int) taimId,
+                                "TEST - kastmine (1min)",
+                                "Kastmine"
+                        );
+                        Log.d("DEBUG_SEED", "Test notification posted.");
+                    } else {
+                        Log.d("DEBUG_SEED", "Test plant already exists. Posting notifications for existing test plants...");
+                        // If test plant exists from previous run, make sure a notification is posted now for each such plant
+                        for (com.example.plantastic.data.entities.Taim t : all) {
+                            try {
+                                if (t.nimi != null && t.nimi.contains("TEST - kastmine")) {
+                                    CareNotificationManager.showCareNotification(
+                                            MainActivity.this,
+                                            t.id,
+                                            t.nimi != null ? t.nimi : "TEST - kastmine",
+                                            "Kastmine"
+                                    );
+                                    Log.d("DEBUG_SEED", "Posted notification for existing test plant id=" + t.id);
+                                }
+                            } catch (Exception e) {
+                                Log.e("DEBUG_SEED", "Failed to post notification for existing test plant", e);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    Log.e("DEBUG_SEED", "Error during test plant seeding", ex);
+                }
+            }).start();
+        }
     }
 
     public void goToAddPlant(View view) {
@@ -112,6 +224,25 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
     }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    // Handle incoming intents that may contain a plantId to open
+    private void handleIntent(Intent intent) {
+        if (intent == null) return;
+        int plantId = intent.getIntExtra("plantId", -1);
+        if (plantId != -1) {
+            // Open MyPlantFragment for this local plant id
+            MyPlantFragment fragment = new MyPlantFragment();
+            android.os.Bundle args = new android.os.Bundle();
+            args.putInt("plantId", plantId);
+            fragment.setArguments(args);
+            replaceFragment(fragment);
+        }
+    }
 }
-
-

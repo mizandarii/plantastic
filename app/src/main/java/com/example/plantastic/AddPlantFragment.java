@@ -36,6 +36,8 @@ import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.data.entities.Taim;
 import com.example.plantastic.data.entities.TaimLiik;
 import com.example.plantastic.data.entities.TaimSort;
+import com.example.plantastic.data.entities.HooldusTüüp;
+import com.example.plantastic.data.entities.Teade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -346,15 +348,53 @@ public class AddPlantFragment extends Fragment {
                     db.fotodDao().insert(foto);
                 }
 
+                // Create default 'Kastmine' notification (teade) for this new plant
+                try {
+                    HooldusTüüp kastmine = db.hooldusTüüpDao().getByName("Kastmine");
+                    if (kastmine == null) {
+                        HooldusTüüp created = new HooldusTüüp();
+                        created.nimetus = "Kastmine";
+                        long createdId = db.hooldusTüüpDao().insert(created);
+                        created.id = (int) createdId;
+                        kastmine = created;
+                    }
+
+                    // interval based on sort.kastmisvajadus
+                    int wateringIntensity = (int) db.taimSortDao().getById((int) sortId).kastmisvajadus;
+                    long interval = getIntervalMillisFromWateringIntensity(wateringIntensity);
+                    long nextTime = System.currentTimeMillis() + interval;
+
+                    Teade t = new Teade();
+                    t.taim_id = (int) taimId;
+                    t.hooldusTüüp_id = kastmine.id;
+                    t.aeg = nextTime;
+                    t.kommentaar = "Watering reminder";
+                    db.teadeDao().insert(t);
+                } catch (Exception ex) {
+                    // ignore errors creating default notification
+                }
+
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(getContext(), "Plant Saved Successfully!", Toast.LENGTH_SHORT).show();
                     getParentFragmentManager().popBackStack(); 
                 });
+
             } catch (Exception e) {
                 Log.e("DB_ERROR", "Failed to save: ", e);
                 requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private long getIntervalMillisFromWateringIntensity(int intensity) {
+        switch (intensity) {
+            case 0: return 365L * 24 * 60 * 60 * 1000;
+            case 1: return 30L * 24 * 60 * 60 * 1000;
+            case 2: return 14L * 24 * 60 * 60 * 1000;
+            case 3: return 7L * 24 * 60 * 60 * 1000;
+            case 4: return 30L * 1000; // testing - 30 seconds
+            default: return 14L * 24 * 60 * 60 * 1000;
+        }
     }
 
 

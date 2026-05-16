@@ -10,7 +10,7 @@ import com.example.plantastic.data.entities.Teade;
 
 public class SnoozeNotificationReceiver extends BroadcastReceiver {
     private static final String TAG = "SnoozeNotificationReceiver";
-    private static final long SNOOZE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+    private static final long SNOOZE_DURATION_MS = 10 * 1000; // 10 seconds for testing
 
     @Override
     public void onReceive(Context context, Intent intent) {

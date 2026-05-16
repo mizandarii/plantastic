@@ -49,6 +49,26 @@
                 android:textColor="@color/daark_green"
                 android:textSize="14sp"
                 android:visibility="visible" />
+            <!-- Care type (used for notification lists) -->
+            <TextView
+                android:id="@+id/care_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/daark_green"
+                android:textSize="13sp"
+                android:visibility="gone"
+                android:layout_marginTop="4dp" />
+            <!-- Action button (kasta) for notification items; hidden by default for normal plant list -->
+            <Button
+                android:id="@+id/kastaButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kasta"
+                android:visibility="gone"
+                android:layout_marginTop="6dp"
+                android:backgroundTint="@color/daark_green"
+                android:textColor="@color/tekstEnts" />
         </LinearLayout>
 
         <ImageView

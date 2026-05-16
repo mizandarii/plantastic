@@ -29,4 +29,5 @@
     <string name="enter_description">Enter description (optional)</string>
     <string name="cancel">Tühista</string>
     <string name="save">Salvesta</string>
+    <string name="minu_taim">Minu taim</string>
 </resources>

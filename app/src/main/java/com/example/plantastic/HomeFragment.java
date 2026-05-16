@@ -27,9 +27,11 @@ public class HomeFragment extends Fragment {
     private PlantasticDatabase db;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     
-    private LinearLayout sectionToday, sectionNext3Days, sectionNext7Days;
-    private LinearLayout containerToday, containerNext3Days, containerNext7Days;
+    private LinearLayout sectionToday, sectionNext7Days;
+    private LinearLayout containerToday, containerNext7Days;
     private TextView emptyText;
+    private View headerToday, headerWeek;
+    private TextView toggleToday, toggleWeek;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,13 +45,42 @@ public class HomeFragment extends Fragment {
         db = PlantasticDatabase.getInstance(requireContext());
         
         sectionToday = view.findViewById(R.id.sectionToday);
-        sectionNext3Days = view.findViewById(R.id.sectionNext3Days);
         sectionNext7Days = view.findViewById(R.id.sectionNext7Days);
-        containerToday = view.findViewById(R.id.containerToday);
-        containerNext3Days = view.findViewById(R.id.containerNext3Days);
-        containerNext7Days = view.findViewById(R.id.containerNext7Days);
+        // Runtime-safe lookup for these container IDs (works even if generated R is inconsistent)
+        int containerTodayId = view.getResources().getIdentifier("containerToday", "id", requireContext().getPackageName());
+        int containerNext7DaysId = view.getResources().getIdentifier("containerNext7Days", "id", requireContext().getPackageName());
+        containerToday = containerTodayId != 0 ? view.findViewById(containerTodayId) : null;
+        containerNext7Days = containerNext7DaysId != 0 ? view.findViewById(containerNext7DaysId) : null;
         emptyText = view.findViewById(R.id.emptyText);
-        
+        headerToday = view.findViewById(R.id.headerToday);
+        headerWeek = view.findViewById(R.id.headerWeek);
+        toggleToday = view.findViewById(R.id.toggleToday);
+        toggleWeek = view.findViewById(R.id.toggleWeek);
+
+        // Today should be expanded by default; week collapsed (handled by layout). Hook toggles.
+        if (headerToday != null && sectionToday != null) {
+            headerToday.setOnClickListener(v -> {
+                if (sectionToday.getVisibility() == View.VISIBLE) {
+                    sectionToday.setVisibility(View.GONE);
+                    if (toggleToday != null) toggleToday.setText("▸");
+                } else {
+                    sectionToday.setVisibility(View.VISIBLE);
+                    if (toggleToday != null) toggleToday.setText("▾");
+                }
+            });
+        }
+        if (headerWeek != null && sectionNext7Days != null) {
+            headerWeek.setOnClickListener(v -> {
+                if (sectionNext7Days.getVisibility() == View.VISIBLE) {
+                    sectionNext7Days.setVisibility(View.GONE);
+                    if (toggleWeek != null) toggleWeek.setText("▸");
+                } else {
+                    sectionNext7Days.setVisibility(View.VISIBLE);
+                    if (toggleWeek != null) toggleWeek.setText("▾");
+                }
+            });
+        }
+
         loadUpcomingCare();
     }
 
@@ -58,23 +89,19 @@ public class HomeFragment extends Fragment {
             try {
                 long now = System.currentTimeMillis();
                 long today_end = getEndOfDay(now);
-                long next3days_end = now + (3L * 24 * 60 * 60 * 1000);
                 long next7days_end = now + (7L * 24 * 60 * 60 * 1000);
 
-                // Fetch all upcoming notifications
-                List<Teade> upcoming = db.teadeDao().getUpcoming(now);
+                // Fetch all upcoming notifications (include slight past buffer so items due "now" aren't missed)
+                List<Teade> upcoming = db.teadeDao().getUpcoming(now - 1000);
 
-                // Separate into time buckets
+                // Separate into time buckets: today and this week
                 List<Teade> today = new ArrayList<>();
-                List<Teade> next3days = new ArrayList<>();
                 List<Teade> next7days = new ArrayList<>();
 
                 if (upcoming != null) {
                     for (Teade teade : upcoming) {
                         if (teade.aeg <= today_end) {
                             today.add(teade);
-                        } else if (teade.aeg <= next3days_end) {
-                            next3days.add(teade);
                         } else if (teade.aeg <= next7days_end) {
                             next7days.add(teade);
                         }
@@ -90,13 +117,7 @@ public class HomeFragment extends Fragment {
                             populateContainer(containerToday, today);
                             hasAny = true;
                         }
-                        
-                        if (!next3days.isEmpty()) {
-                            sectionNext3Days.setVisibility(View.VISIBLE);
-                            populateContainer(containerNext3Days, next3days);
-                            hasAny = true;
-                        }
-                        
+
                         if (!next7days.isEmpty()) {
                             sectionNext7Days.setVisibility(View.VISIBLE);
                             populateContainer(containerNext7Days, next7days);
@@ -122,47 +143,123 @@ public class HomeFragment extends Fragment {
     }
 
     private View createCareCard(Teade teade) {
-        LinearLayout card = new LinearLayout(requireContext());
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(12, 12, 12, 12);
-        card.setBackgroundResource(R.drawable.search_view_bg);
-        
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        cardParams.setMargins(0, 0, 0, 8);
-        card.setLayoutParams(cardParams);
+        // Inflate reusable plant card and adapt for notification usage
+        View card = getLayoutInflater().inflate(R.layout.my_plant_card, null);
 
-        // Plant name
-        TextView plantNameText = new TextView(requireContext());
-        plantNameText.setTextSize(16);
-        plantNameText.setTextColor(requireContext().getColor(R.color.black));
-        plantNameText.setTypeface(null, android.graphics.Typeface.BOLD);
-        
+        // Bind basic views
+        android.widget.ImageView img = card.findViewById(R.id.selectedPlantImage);
+        android.widget.TextView nickname = card.findViewById(R.id.nickname);
+        android.widget.TextView common = card.findViewById(R.id.common_name);
+        android.widget.TextView careTypeTv = card.findViewById(R.id.care_type);
+        android.widget.Button kastaBtn = card.findViewById(R.id.kastaButton);
+        android.widget.ImageView edit = card.findViewById(R.id.edit);
+        android.widget.ImageView del = card.findViewById(R.id.delete);
+        android.widget.ImageView drop = card.findViewById(R.id.drop);
+
+        // Populate plant info
         String plantName = getPlantNameForTeade(teade);
-        plantNameText.setText(plantName != null ? plantName : "Unknown Plant");
-        card.addView(plantNameText);
+        nickname.setText(plantName != null ? plantName : "Unknown Plant");
 
-        // Care type and date
-        TextView careText = new TextView(requireContext());
-        careText.setTextSize(14);
-        careText.setTextColor(requireContext().getColor(R.color.black));
-        careText.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        careText.setPadding(0, 8, 0, 0);
-        
+        String sortName = "";
+        try {
+            com.example.plantastic.data.entities.TaimWithDetails twd = db.taimDao().getWithDetailsById(teade.taim_id);
+            if (twd != null && twd.sort != null) sortName = twd.sort.nimetus != null ? twd.sort.nimetus : "";
+            if (twd != null && twd.fotos != null && !twd.fotos.isEmpty()) {
+                com.bumptech.glide.Glide.with(card).load(twd.fotos.get(0).foto).into(img);
+            } else {
+                img.setImageResource(R.drawable.ic_flower);
+            }
+        } catch (Exception ex) {
+            img.setImageResource(R.drawable.ic_flower);
+        }
+
+        if (sortName != null && !sortName.isEmpty()) {
+            common.setText(sortName);
+            common.setVisibility(View.VISIBLE);
+        } else {
+            common.setVisibility(View.GONE);
+        }
+
+        // Show care type and date
         String careType = getCareTypeName(teade.hooldusTüüp_id);
         String dateStr = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(new Date(teade.aeg));
-        careText.setText(careType + " - " + dateStr);
-        card.addView(careText);
+        careTypeTv.setText(careType + " - " + dateStr);
+        careTypeTv.setVisibility(View.VISIBLE);
 
-        // Click listener to open plant detail
+        // Hide edit/delete/drop icons for notification presentation
+        if (edit != null) edit.setVisibility(View.GONE);
+        if (del != null) del.setVisibility(View.GONE);
+        if (drop != null) drop.setVisibility(View.GONE);
+
+        // Show kasta button and wire it to mark as watered and reschedule
+        if (kastaBtn != null) {
+            kastaBtn.setVisibility(View.VISIBLE);
+            kastaBtn.setOnClickListener(v -> {
+                // perform watering similar to other fragments
+                new Thread(() -> {
+                    try {
+                        // get or create kastmine type
+                        com.example.plantastic.data.entities.HooldusTüüp kast = db.hooldusTüüpDao().getByName("Kastmine");
+                        if (kast == null) {
+                            kast = new com.example.plantastic.data.entities.HooldusTüüp();
+                            kast.nimetus = "Kastmine";
+                            long id = db.hooldusTüüpDao().insert(kast);
+                            kast.id = (int) id;
+                        }
+
+                        com.example.plantastic.data.entities.HooldusAjalugu hist = new com.example.plantastic.data.entities.HooldusAjalugu();
+                        hist.taim_id = teade.taim_id;
+                        hist.hooldusTüüp_id = kast.id;
+                        hist.aeg = System.currentTimeMillis();
+                        hist.kommentaar = "Kastetud (via notification)";
+                        db.hooldusAjaluguDao().insert(hist);
+
+                        // reschedule next notification based on plant sort
+                        com.example.plantastic.data.entities.TaimWithDetails twd2 = db.taimDao().getWithDetailsById(teade.taim_id);
+                        if (twd2 != null && twd2.sort != null) {
+                            long interval = getIntervalMillisFromWateringIntensity(twd2.sort.kastmisvajadus);
+                            long next = System.currentTimeMillis() + interval;
+
+                            com.example.plantastic.data.entities.Teade t = db.teadeDao().getByTaimAndType(teade.taim_id, kast.id);
+                            if (t == null) {
+                                t = new com.example.plantastic.data.entities.Teade();
+                                t.taim_id = teade.taim_id;
+                                t.hooldusTüüp_id = kast.id;
+                                t.aeg = next;
+                                t.kommentaar = "Watering reminder";
+                                db.teadeDao().insert(t);
+                            } else {
+                                t.aeg = next;
+                                db.teadeDao().update(t);
+                            }
+                        }
+
+                        // Refresh UI
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(this::loadUpcomingCare);
+                        }
+                    } catch (Exception ex) {
+                        // ignore
+                    }
+                }).start();
+            });
+        }
+
+        // Clicking free space opens plant detail
         card.setOnClickListener(v -> openPlantDetail(teade.taim_id));
 
         return card;
+    }
+
+    private long getIntervalMillisFromWateringIntensity(int intensity) {
+        switch (intensity) {
+            case 0: return 365L * 24 * 60 * 60 * 1000; // yearly
+            case 1: return 30L * 24 * 60 * 60 * 1000;  // monthly
+            case 2: return 14L * 24 * 60 * 60 * 1000;  // bi-weekly
+            case 3: return 7L * 24 * 60 * 60 * 1000;   // weekly
+            case 4: return 30L * 1000;                 // testing - 30 seconds
+            default: return 14L * 24 * 60 * 60 * 1000;
+        }
     }
 
     private String getPlantNameForTeade(Teade teade) {

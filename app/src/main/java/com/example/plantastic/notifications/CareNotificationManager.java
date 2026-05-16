@@ -58,6 +58,17 @@ public class CareNotificationManager {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        // Kasta action - mark as watered directly from notification
+        Intent kastaIntent = new Intent(context, KastaNotificationReceiver.class);
+        kastaIntent.putExtra("taim_id", taimId);
+        kastaIntent.putExtra("hooldus_type_id", 1);
+        PendingIntent kastaPendingIntent = PendingIntent.getBroadcast(
+                context,
+                taimId + 2000,
+                kastaIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("Taim vajab hooldust")
@@ -67,7 +78,8 @@ public class CareNotificationManager {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(openPendingIntent)
-                .addAction(R.drawable.ic_launcher_foreground, "Snooze 1h", snoozePendingIntent);
+                .addAction(R.drawable.ic_launcher_foreground, "Snooze 10s", snoozePendingIntent)
+                .addAction(R.drawable.ic_launcher_foreground, "Kasta", kastaPendingIntent);
 
         NotificationManager notificationManager = 
                 context.getSystemService(NotificationManager.class);

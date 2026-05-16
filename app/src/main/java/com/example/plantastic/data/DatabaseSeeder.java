@@ -73,6 +73,24 @@ public class DatabaseSeeder {
                     t2.sort_id = sort.id;
                     t2.kasutaja_id = user.id;
                     db.taimDao().insert(t2);
+                    // Add a test plant that uses the testing watering interval (kastmisvajadus = 4 => 1 minute)
+                    try {
+                        com.example.plantastic.data.entities.TaimSort testSort = new com.example.plantastic.data.entities.TaimSort();
+                        testSort.api_taim_id = 0;
+                        testSort.nimetus = "TEST Sort (1min)";
+                        testSort.ladinakeelne_nimetus = "Testus minuto";
+                        testSort.liik_id = sort.liik_id;
+                        testSort.kastmisvajadus = 4; // testing interval
+                        long testSortId = db.taimSortDao().insert(testSort);
+
+                        Taim testT = new Taim();
+                        testT.nimi = "TEST - KASTMINE 1min (delete me)";
+                        testT.sort_id = (int) testSortId;
+                        testT.kasutaja_id = user.id;
+                        db.taimDao().insert(testT);
+                    } catch (Exception ex) {
+                        Log.w("DatabaseSeeder", "Failed to create test plant: " + ex.getMessage());
+                    }
                 }
             }
 

@@ -21,22 +21,38 @@
             android:textStyle="bold"
             android:layout_marginBottom="24dp" />
 
-        <!-- Today Section -->
+        <!-- Today (expanded by default) -->
+        <LinearLayout
+            android:id="@+id/headerToday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:id="@+id/titleToday"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Täna"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
+            <TextView
+                android:id="@+id/toggleToday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▾"
+                android:textSize="18sp"
+                android:textColor="@color/black" />
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/sectionToday"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Täna"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="16dp">
             <LinearLayout
                 android:id="@+id/containerToday"
                 android:layout_width="match_parent"
@@ -44,30 +60,32 @@
                 android:orientation="vertical" />
         </LinearLayout>
 
-        <!-- Next 3 Days Section -->
+        <!-- This week (collapsed by default) -->
         <LinearLayout
-            android:id="@+id/sectionNext3Days"
+            android:id="@+id/headerWeek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/titleWeek"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Järgmised 3 päeva"
+                android:layout_weight="1"
+                android:text="Sel nädalal"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_marginBottom="8dp" />
-            <LinearLayout
-                android:id="@+id/containerNext3Days"
-                android:layout_width="match_parent"
+                android:textColor="@color/black" />
+            <TextView
+                android:id="@+id/toggleWeek"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:text="▸"
+                android:textSize="18sp"
+                android:textColor="@color/black" />
         </LinearLayout>
-
-        <!-- Next 7 Days Section -->
         <LinearLayout
             android:id="@+id/sectionNext7Days"
             android:layout_width="match_parent"
@@ -75,14 +93,6 @@
             android:orientation="vertical"
             android:layout_marginBottom="16dp"
             android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sel nädalal"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_marginBottom="8dp" />
             <LinearLayout
                 android:id="@+id/containerNext7Days"
                 android:layout_width="match_parent"

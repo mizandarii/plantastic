@@ -405,7 +405,7 @@ public class MyPlantFragment extends Fragment {
             case 1: return 30L * 24 * 60 * 60 * 1000;  // Minimum - monthly
             case 2: return 14L * 24 * 60 * 60 * 1000;  // Average - bi-weekly
             case 3: return 7L * 24 * 60 * 60 * 1000;   // Frequent - weekly
-            case 4: return 5L * 60 * 1000;             // Testing - 5 minutes
+            case 4: return 30L * 1000;                 // Testing - 30 seconds
             default: return 14L * 24 * 60 * 60 * 1000; // fallback
         }
     }
