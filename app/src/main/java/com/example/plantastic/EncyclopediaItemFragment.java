@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.plantastic.api.PerenualClient;
 import com.example.plantastic.api.PerenualService;
 import com.example.plantastic.api.PlantResponse;
 import com.example.plantastic.api.PlantCareGuideResponse;
@@ -129,11 +130,7 @@ public class EncyclopediaItemFragment extends Fragment {
     }
 
     private void setupRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        apiService = retrofit.create(PerenualService.class);
+        apiService = PerenualClient.getService();
     }
 
     private void loadApiKey() {
@@ -287,12 +284,7 @@ public class EncyclopediaItemFragment extends Fragment {
     }
 
     private void loadCareGuide(String url, TextView descriptionText) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        PerenualService service = retrofit.create(PerenualService.class);
+        PerenualService service = PerenualClient.getService();
         service.getCareGuide(url).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<PlantCareGuideResponse> call, @NonNull Response<PlantCareGuideResponse> response) {

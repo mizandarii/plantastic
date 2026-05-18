@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
-        android:text="Minu taimed"
+        android:text="@string/minu_taimed"
         android:textSize="48sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -24,7 +24,7 @@
         android:layout_height="59dp"
         android:layout_marginStart="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Lisa taim"
+        android:contentDescription="@string/lisa_taim"
         android:src="@drawable/btn_add"
         app:layout_constraintBottom_toBottomOf="@id/titleText"
         app:layout_constraintStart_toEndOf="@id/titleText"

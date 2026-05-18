@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bgcolor">
@@ -13,6 +12,7 @@
         android:layout_height="40dp"
         android:layout_marginStart="16dp"
         android:scaleType="centerInside"
+        android:contentDescription="@string/backbutton"
         app:layout_constraintBottom_toBottomOf="@+id/titleText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/titleText"
@@ -66,7 +66,8 @@
                     android:layout_height="200dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/plant"
-                    app:shapeAppearanceOverlay="@style/rounded_corners" />
+                    app:shapeAppearanceOverlay="@style/rounded_corners"
+                     />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -80,7 +81,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Common Name"
+                        android:text="@string/common_name"
                         android:textColor="@color/daark_green"
                         android:textSize="24sp"
                         android:textStyle="bold" />
@@ -105,7 +106,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="0dp"
-                    android:text="scientific name"
+                    android:text="@string/scientific_name"
                     android:textColor="@color/daark_green"
                     android:textSize="18sp"
                     android:textStyle="italic" />
@@ -116,7 +117,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:fontFamily="@font/inter_28pt_regular"
-                    android:text="Description goes here..."
+                    android:text="@string/description_goes_here"
                     android:textColor="@color/daark_green" />
 
                 <LinearLayout
@@ -131,7 +132,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="care level"
+                        android:text="@string/care_level"
                         android:textColor="@color/tekstEnts"
                         android:textStyle="bold"
                         />
@@ -140,13 +141,13 @@
                         android:id="@+id/careLevel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="medium"
+                        android:text="@string/medium"
                         android:textColor="@color/tekstEnts" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="toxic to pets"
+                        android:text="@string/toxic_to_pets"
                         android:textColor="@color/tekstEnts"
                         android:textStyle="bold"/>
 
@@ -154,14 +155,14 @@
                         android:id="@+id/toxicToPets"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="no"
+                        android:text="@string/no"
                         android:textColor="@color/tekstEnts" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="sunlight requirement"
+                        android:text="@string/sunlight_requirement"
                         android:textStyle="bold"
 
                         android:textColor="@color/tekstEnts" />
@@ -180,6 +181,7 @@
                             android:src="@drawable/ic_sun"
                             app:tint="@color/tekstEnts"
                             android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
                             />
                         <ImageView
                             android:id="@+id/sun2"
@@ -189,6 +191,7 @@
                             android:src="@drawable/ic_sun"
                             app:tint="@color/tekstEnts"
                             android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
                         />
                         <ImageView
                             android:id="@+id/sun3"
@@ -197,7 +200,9 @@
                             android:layout_marginEnd="6dp"
                             android:src="@drawable/ic_sun"
                             app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
+                            android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
+                            />
                         <ImageView
                             android:id="@+id/sun4"
                             android:layout_width="20dp"
@@ -206,6 +211,7 @@
                             android:src="@drawable/ic_sun"
                             app:tint="@color/tekstEnts"
                             android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
                             />
                     </LinearLayout>
 
@@ -213,7 +219,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="water requirement"
+                        android:text="@string/water_requirement"
                         android:textStyle="bold"
                         android:textColor="@color/tekstEnts" />
 
@@ -230,7 +236,9 @@
                             android:layout_marginEnd="11dp"
                             android:src="@drawable/ic_drop"
                             app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
+                            android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
+                            />
                         <ImageView
                             android:id="@+id/drop2"
                             android:layout_width="15dp"
@@ -238,7 +246,9 @@
                             android:layout_marginEnd="11dp"
                             android:src="@drawable/ic_drop"
                             app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
+                            android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
+                            />
                         <ImageView
                             android:id="@+id/drop3"
                             android:layout_width="15dp"
@@ -246,7 +256,9 @@
                             android:layout_marginEnd="11dp"
                             android:src="@drawable/ic_drop"
                             app:tint="@color/tekstEnts"
-                            android:alpha="0.3" />
+                            android:alpha="0.3"
+                            android:contentDescription="@string/sun_icon"
+                            />
 
                     </LinearLayout>
                 </LinearLayout>

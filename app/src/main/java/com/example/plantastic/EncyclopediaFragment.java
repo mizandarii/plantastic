@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.plantastic.api.PerenualClient;
 import com.example.plantastic.api.PerenualService;
 import com.example.plantastic.api.PlantAdapter;
 import com.example.plantastic.api.PlantResponse;
@@ -89,11 +90,7 @@ public class EncyclopediaFragment extends Fragment {
     }
 
     private void setupRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        apiService = retrofit.create(PerenualService.class);
+        apiService = PerenualClient.getService();
     }
 
     private void setupRecyclerView() {

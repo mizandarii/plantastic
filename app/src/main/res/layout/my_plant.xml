@@ -25,7 +25,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@null"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:padding="0dp"
                 android:src="@drawable/weui_arrow_filled__1_" />
 
@@ -38,7 +38,8 @@
                 android:fontFamily="@font/abril_fatface_regular"
                 android:textColor="@color/black"
                 android:textSize="30sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                />
 
         </LinearLayout>
 
@@ -169,7 +170,7 @@
                 android:layout_marginEnd="6dp"
                 android:backgroundTint="@color/btncolor"
                 android:textColor="@color/white"
-                android:text="Kasta"
+                android:text="@string/kasta"
                 android:textAllCaps="false"
                 android:textSize="20sp"
                 style="?android:attr/buttonBarButtonStyle"
@@ -185,7 +186,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:backgroundTint="@color/btncolor"
-                android:text="Muuta"
+                android:text="@string/muuta"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -208,7 +209,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
-                android:text="Hooldusajalugu"
+                android:text="@string/hooldusajalugu"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -230,7 +231,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:padding="8dp"
-                        android:text="Tüüp"
+                        android:text="@string/t_p"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
 
@@ -239,7 +240,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:padding="8dp"
-                        android:text="Kuupäev"
+                        android:text="@string/kuup_ev"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
 
@@ -248,7 +249,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:padding="8dp"
-                        android:text="Aeg"
+                        android:text="@string/aeg"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
                 </TableRow>

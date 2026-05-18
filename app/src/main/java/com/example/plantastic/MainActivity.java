@@ -15,16 +15,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 import com.example.plantastic.databinding.ActivityMainBinding;
 import com.example.plantastic.notifications.CareNotificationManager;
-import com.example.plantastic.notifications.CareNotificationWorker;
+import com.example.plantastic.notifications.CareReminderScheduler;
 import android.content.pm.ApplicationInfo;
 import android.util.Log;
-
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
@@ -92,19 +88,6 @@ public class MainActivity extends AppCompatActivity {
         // Create notification channel
         CareNotificationManager.createNotificationChannel(this);
 
-        // Schedule periodic check for due notifications (every 15 minutes)
-        PeriodicWorkRequest notificationWork = new PeriodicWorkRequest.Builder(
-                CareNotificationWorker.class,
-                15,
-                TimeUnit.MINUTES
-        ).build();
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                "care_notification_check",
-                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-                notificationWork
-        );
-
         // Debug: seed a test plant that uses the fast testing interval (1 minute)
         boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         if (isDebuggable) {
@@ -168,44 +151,61 @@ public class MainActivity extends AppCompatActivity {
                             kast.id = (int) kid;
                         }
 
-                        // Insert a Teade scheduled for right now (so notification shows immediately)
+                        // Insert a Teade scheduled for the fast testing interval
                         com.example.plantastic.data.entities.Teade teade = new com.example.plantastic.data.entities.Teade();
                         teade.taim_id = (int) taimId;
                         teade.hooldusTüüp_id = kast.id;
-                        teade.aeg = System.currentTimeMillis(); // Due immediately for testing
-                        teade.kommentaar = "Test watering reminder (immediate)";
+                        teade.aeg = System.currentTimeMillis() + (30 * 1000);
+                        teade.kommentaar = "Test watering reminder (30 seconds)";
                         db.teadeDao().insert(teade);
-
-                        Log.d("DEBUG_SEED", "Test plant created with ID: " + taimId + ", Teade due now.");
-
-                        // Show the notification immediately for testing
-                        Log.d("DEBUG_SEED", "Posting test notification immediately...");
-                        CareNotificationManager.showCareNotification(
+                        CareReminderScheduler.scheduleReminder(
                                 MainActivity.this,
                                 (int) taimId,
-                                "TEST - kastmine (1min)",
-                                "Kastmine"
+                                kast.id,
+                                teade.aeg
                         );
-                        Log.d("DEBUG_SEED", "Test notification posted.");
+                        Log.d("DEBUG_SEED", "Test plant created with ID: " + taimId + ", reminder scheduled.");
                     } else {
-                        Log.d("DEBUG_SEED", "Test plant already exists. Posting notifications for existing test plants...");
-                        // If test plant exists from previous run, make sure a notification is posted now for each such plant
+                        Log.d("DEBUG_SEED", "Test plant already exists. Syncing reminder work for existing test plants...");
+                        // If test plant exists from previous run, make sure reminder work is scheduled for each such plant
                         for (com.example.plantastic.data.entities.Taim t : all) {
                             try {
                                 if (t.nimi != null && t.nimi.contains("TEST - kastmine")) {
-                                    CareNotificationManager.showCareNotification(
-                                            MainActivity.this,
-                                            t.id,
-                                            t.nimi != null ? t.nimi : "TEST - kastmine",
-                                            "Kastmine"
-                                    );
-                                    Log.d("DEBUG_SEED", "Posted notification for existing test plant id=" + t.id);
+                                    java.util.List<com.example.plantastic.data.entities.Teade> teades = db.teadeDao().getByTaimId(t.id);
+                                    if (teades != null) {
+                                        for (com.example.plantastic.data.entities.Teade teade : teades) {
+                                            if (teade != null && teade.hooldusTüüp_id != null) {
+                                                CareReminderScheduler.scheduleReminder(
+                                                        MainActivity.this,
+                                                        t.id,
+                                                        teade.hooldusTüüp_id,
+                                                        teade.aeg
+                                                );
+                                                Log.d("DEBUG_SEED", "Scheduled existing test plant reminder id=" + t.id + " type=" + teade.hooldusTüüp_id);
+                                            }
+                                        }
+                                    }
                                 }
                             } catch (Exception e) {
-                                Log.e("DEBUG_SEED", "Failed to post notification for existing test plant", e);
+                                Log.e("DEBUG_SEED", "Failed to schedule notification for existing test plant", e);
                             }
                         }
                     }
+                    CareReminderScheduler.syncUpcomingReminders(MainActivity.this, db);
+                    runOnUiThread(() -> {
+                        Fragment current = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+                        if (current instanceof HomeFragment) {
+                            ((HomeFragment) current).refreshReminders();
+                            if (binding != null && binding.main != null) {
+                                binding.main.postDelayed(() -> {
+                                    Fragment delayedCurrent = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+                                    if (delayedCurrent instanceof HomeFragment) {
+                                        ((HomeFragment) delayedCurrent).refreshReminders();
+                                    }
+                                }, 300L);
+                            }
+                        }
+                    });
                 } catch (Exception ex) {
                     Log.e("DEBUG_SEED", "Error during test plant seeding", ex);
                 }

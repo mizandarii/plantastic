@@ -14,9 +14,11 @@ import androidx.fragment.app.Fragment;
 
 import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.Kasutaja;
+import com.example.plantastic.notifications.CareNotificationManager;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Locale;
 
 public class SettingsFragment extends Fragment {
 
@@ -99,7 +101,7 @@ public class SettingsFragment extends Fragment {
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(),
                 (view, hourOfDay, selectedMinute) -> {
-                    long minutesFromMidnight = hourOfDay * 60 + selectedMinute;
+                    long minutesFromMidnight = hourOfDay * 60L + selectedMinute;
                     targetTextView.setText(formatTime(minutesFromMidnight));
 
                     if (isStart) {
@@ -114,8 +116,12 @@ public class SettingsFragment extends Fragment {
 
     private void saveSettings() {
         if (currentUser == null) return;
+        android.content.Context appContext = requireContext().getApplicationContext();
         ioExecutor.execute(() -> {
             db.kasutajaDao().update(currentUser);
+            if (!currentUser.teade_on) {
+                CareNotificationManager.cancelAllCareNotifications(appContext);
+            }
         });
     }
 
@@ -140,6 +146,6 @@ public class SettingsFragment extends Fragment {
     private String formatTime(long minutesFromMidnight) {
         int h = (int) (minutesFromMidnight / 60);
         int m = (int) (minutesFromMidnight % 60);
-        return String.format("%02d:%02d", h, m);
+        return String.format(Locale.getDefault(), "%02d:%02d", h, m);
     }
 }

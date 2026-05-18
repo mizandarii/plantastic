@@ -26,9 +26,46 @@ public class CareNotificationWorker extends Worker {
     @Override
     public Result doWork() {
         try {
+            if (!CareNotificationManager.areCareNotificationsEnabled(getApplicationContext())) {
+                Log.d(TAG, "App notification switch is off; skipping notification delivery");
+                return Result.success();
+            }
+
             PlantasticDatabase db = PlantasticDatabase.getInstance(getApplicationContext());
             long now = System.currentTimeMillis();
-            
+            int inputPlantId = getInputData().getInt("taim_id", -1);
+            int inputCareTypeId = getInputData().getInt("hooldus_type_id", -1);
+
+            if (inputPlantId != -1 && inputCareTypeId != -1) {
+                Teade teade = db.teadeDao().getByTaimAndType(inputPlantId, inputCareTypeId);
+                if (teade != null) {
+                    if (teade.aeg > now) {
+                        CareReminderScheduler.scheduleReminder(
+                                getApplicationContext(),
+                                teade.taim_id,
+                                teade.hooldusTüüp_id,
+                                teade.aeg
+                        );
+                        return Result.success();
+                    }
+
+                    Taim taim = db.taimDao().getById(teade.taim_id);
+                    String careType = getCareTypeName(db, teade.hooldusTüüp_id);
+                    if (taim != null) {
+                        int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
+                        CareNotificationManager.showCareNotification(
+                                getApplicationContext(),
+                                taim.id,
+                                typeId,
+                                taim.nimi,
+                                careType
+                        );
+                        Log.d(TAG, "Notification sent for scheduled work: " + taim.nimi);
+                    }
+                }
+                return Result.success();
+            }
+
             // Get all notifications that are due
             List<Teade> dueNotifications = db.teadeDao().getUpcoming(now - 1000); // slight buffer
             
@@ -41,13 +78,15 @@ public class CareNotificationWorker extends Worker {
                         Taim taim = db.taimDao().getById(teade.taim_id);
                         String careType = getCareTypeName(db, teade.hooldusTüüp_id);
                         
-                        if (taim != null) {
-                            CareNotificationManager.showCareNotification(
-                                    getApplicationContext(),
-                                    taim.id,
-                                    taim.nimi,
-                                    careType
-                            );
+                            if (taim != null) {
+                                int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
+                                CareNotificationManager.showCareNotification(
+                                        getApplicationContext(),
+                                        taim.id,
+                                        typeId,
+                                        taim.nimi,
+                                        careType
+                                );
                             sentPlantIds.add(teade.taim_id);
                             Log.d(TAG, "Notification sent for plant: " + taim.nimi);
                         }

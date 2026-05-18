@@ -35,17 +35,19 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Täna"
-                android:textSize="18sp"
+                android:text="@string/today"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/black" />
-            <TextView
+                android:textColor="@color/black"
+                android:fontFamily="@font/inter_28pt_regular"/>
+            <ImageView
                 android:id="@+id/toggleToday"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="▾"
-                android:textSize="18sp"
-                android:textColor="@color/black" />
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/vector"
+                app:tint="@color/daark_green"
+                android:contentDescription="@string/toggle"
+                />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/sectionToday"
@@ -74,17 +76,19 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Sel nädalal"
-                android:textSize="18sp"
+                android:text="@string/this_week"
+                android:textSize="20sp"
+                android:fontFamily="@font/inter_28pt_regular"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
-            <TextView
+            <ImageView
                 android:id="@+id/toggleWeek"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="▸"
-                android:textSize="18sp"
-                android:textColor="@color/black" />
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/vector"
+                app:tint="@color/daark_green"
+                android:contentDescription="@string/toggle"
+                 />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/sectionNext7Days"
@@ -92,9 +96,53 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="16dp"
-            android:visibility="gone">
+            android:visibility="gone"
+            >
             <LinearLayout
                 android:id="@+id/containerNext7Days"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <!-- Later (collapsed by default) -->
+        <LinearLayout
+            android:id="@+id/headerLater"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <TextView
+                android:id="@+id/titleLater"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/hiljem"
+                android:textSize="20sp"
+                android:fontFamily="@font/inter_28pt_regular"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
+            <ImageView
+                android:id="@+id/toggleLater"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/vector"
+                app:tint="@color/daark_green"
+                android:contentDescription="@string/toggle"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/sectionLater"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
+            >
+            <LinearLayout
+                android:id="@+id/containerLater"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
@@ -105,7 +153,7 @@
             android:id="@+id/emptyText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Teie taimed on hoolitsetud!"
+            android:text="@string/teie_taimed_on_hoolitsetud"
             android:textSize="16sp"
             android:textColor="@color/black"
             android:gravity="center"

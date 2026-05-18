@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.plantastic.api.PerenualClient;
 import com.example.plantastic.api.PerenualService;
 import com.example.plantastic.api.PlantAdapter;
 import com.example.plantastic.api.PlantResponse;
@@ -38,6 +39,7 @@ import com.example.plantastic.data.entities.TaimLiik;
 import com.example.plantastic.data.entities.TaimSort;
 import com.example.plantastic.data.entities.HooldusTüüp;
 import com.example.plantastic.data.entities.Teade;
+import com.example.plantastic.notifications.CareReminderScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,11 +151,7 @@ public class AddPlantFragment extends Fragment {
     }
 
     private void setupRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        apiService = retrofit.create(PerenualService.class);
+        apiService = PerenualClient.getService();
     }
 
     private void setupRecyclerView() {
@@ -361,7 +359,7 @@ public class AddPlantFragment extends Fragment {
 
                     // interval based on sort.kastmisvajadus
                     int wateringIntensity = (int) db.taimSortDao().getById((int) sortId).kastmisvajadus;
-                    long interval = getIntervalMillisFromWateringIntensity(wateringIntensity);
+                    long interval = CareReminderScheduler.getIntervalMillisFromWateringIntensity(wateringIntensity);
                     long nextTime = System.currentTimeMillis() + interval;
 
                     Teade t = new Teade();
@@ -370,6 +368,13 @@ public class AddPlantFragment extends Fragment {
                     t.aeg = nextTime;
                     t.kommentaar = "Watering reminder";
                     db.teadeDao().insert(t);
+                    CareReminderScheduler.scheduleReminder(requireContext(), (int) taimId, kastmine.id, nextTime);
+                    // notify UI so Home can show the new reminder card immediately (limit broadcast to this app)
+                    try {
+                        android.content.Intent _i = new android.content.Intent(com.example.plantastic.notifications.CareReminderScheduler.ACTION_REMINDERS_UPDATED);
+                        _i.setPackage(requireContext().getPackageName());
+                        requireContext().sendBroadcast(_i);
+                    } catch (Exception ignore) {}
                 } catch (Exception ex) {
                     // ignore errors creating default notification
                 }
@@ -387,14 +392,7 @@ public class AddPlantFragment extends Fragment {
     }
 
     private long getIntervalMillisFromWateringIntensity(int intensity) {
-        switch (intensity) {
-            case 0: return 365L * 24 * 60 * 60 * 1000;
-            case 1: return 30L * 24 * 60 * 60 * 1000;
-            case 2: return 14L * 24 * 60 * 60 * 1000;
-            case 3: return 7L * 24 * 60 * 60 * 1000;
-            case 4: return 30L * 1000; // testing - 30 seconds
-            default: return 14L * 24 * 60 * 60 * 1000;
-        }
+        return CareReminderScheduler.getIntervalMillisFromWateringIntensity(intensity);
     }
 
 
