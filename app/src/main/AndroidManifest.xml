@@ -42,6 +42,9 @@
                 <action android:name="com.example.plantastic.KASTA_NOTIFICATION" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".notifications.CareReminderAlarmReceiver"
+            android:exported="false" />
 
     </application>
 

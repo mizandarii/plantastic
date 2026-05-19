@@ -63,6 +63,24 @@ public final class CareActionHandler {
 
                 CareNotificationManager.cancelCareNotification(appContext, taimId);
                 CareReminderScheduler.scheduleReminder(appContext, taimId, kast.id, next);
+                // Extra logging and a small debug confirmation notification so it's
+                // immediately obvious on-device that the Kasta action ran and what
+                // the next scheduled time is. This helps diagnose cases where the
+                // work is scheduled but never appears later.
+                try {
+                    android.util.Log.d(TAG, "Kast scheduled; posting debug confirmation notification for taimId=" + taimId + " nextAeg=" + next);
+                    CareNotificationManager.createNotificationChannel(appContext);
+                    android.app.NotificationManager nm = appContext.getSystemService(android.app.NotificationManager.class);
+                    if (nm != null) {
+                        androidx.core.app.NotificationCompat.Builder b = new androidx.core.app.NotificationCompat.Builder(appContext, "care_notifications")
+                                .setSmallIcon(com.example.plantastic.R.drawable.ic_launcher_foreground)
+                                .setContentTitle("Kast: scheduled")
+                                .setContentText("Next at: " + java.text.DateFormat.getDateTimeInstance().format(new java.util.Date(next)))
+                                .setAutoCancel(true)
+                                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW);
+                        nm.notify( (int)(100000 + taimId), b.build());
+                    }
+                } catch (Exception ignore) {}
                 try {
                     Intent _i = new Intent(CareReminderScheduler.ACTION_REMINDERS_UPDATED);
                     _i.setPackage(appContext.getPackageName());

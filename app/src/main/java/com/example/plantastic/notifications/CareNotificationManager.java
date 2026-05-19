@@ -124,7 +124,9 @@ public class CareNotificationManager {
         NotificationManager notificationManager = 
                 context.getSystemService(NotificationManager.class);
         if (notificationManager != null) {
-            notificationManager.notify(CareReminderScheduler.getNotificationId(taimId), builder.build());
+            int nid = CareReminderScheduler.getNotificationId(taimId);
+            android.util.Log.d("CareNotificationManager", "Posting notification nid=" + nid + " for taimId=" + taimId + " title=" + plantName + " careType=" + careType);
+            notificationManager.notify(nid, builder.build());
         }
     }
 

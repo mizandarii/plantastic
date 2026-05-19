@@ -1,6 +1,7 @@
 package com.example.plantastic.notifications;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -31,6 +32,10 @@ public final class CareReminderScheduler {
 
     public static String getWorkName(int taimId, int careTypeId) {
         return "care_reminder_" + taimId + "_" + careTypeId;
+    }
+
+    private static int getAlarmRequestCode(int taimId, int careTypeId) {
+        return getWorkName(taimId, careTypeId).hashCode();
     }
 
     public static long getIntervalMillisFromWateringIntensity(int intensity) {
@@ -114,13 +119,36 @@ public final class CareReminderScheduler {
         long adjustedTriggerAtMillis = adjustToAllowedNotificationTime(appContext, triggerAtMillis);
         long delay = Math.max(0L, adjustedTriggerAtMillis - System.currentTimeMillis());
 
+        Intent alarmIntent = new Intent(appContext, CareReminderAlarmReceiver.class)
+                .putExtra("taim_id", taimId)
+                .putExtra("hooldus_type_id", careTypeId)
+                .putExtra("scheduled_aeg", adjustedTriggerAtMillis);
+        android.app.PendingIntent alarmPi = android.app.PendingIntent.getBroadcast(
+                appContext,
+                getAlarmRequestCode(taimId, careTypeId),
+                alarmIntent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
+        );
+        android.app.AlarmManager alarmManager = appContext.getSystemService(android.app.AlarmManager.class);
+        if (alarmManager != null) {
+            alarmManager.cancel(alarmPi);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                // More reliable for short reminder delays when app process gets reclaimed.
+                alarmManager.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, adjustedTriggerAtMillis, alarmPi);
+            } else {
+                alarmManager.set(android.app.AlarmManager.RTC_WAKEUP, adjustedTriggerAtMillis, alarmPi);
+            }
+        }
+
         Data input = new Data.Builder()
                 .putInt("taim_id", taimId)
                 .putInt("hooldus_type_id", careTypeId)
+                .putLong("scheduled_aeg", adjustedTriggerAtMillis)
                 .build();
 
+        long fallbackWorkerAt = adjustedTriggerAtMillis + 5000L;
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(CareNotificationWorker.class)
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInitialDelay(Math.max(0L, fallbackWorkerAt - System.currentTimeMillis()), TimeUnit.MILLISECONDS)
                 .setInputData(input)
                 .addTag(getWorkName(taimId, careTypeId))
                 .build();
@@ -134,9 +162,37 @@ public final class CareReminderScheduler {
         Log.d(TAG, "Scheduled reminder taimId=" + taimId + " careTypeId=" + careTypeId
                 + " requestedAt=" + triggerAtMillis
                 + " adjustedAt=" + adjustedTriggerAtMillis
-                + " delayMs=" + delay);
+                + " delayMs=" + delay
+                + " workerFallbackAt=" + fallbackWorkerAt);
     }
 
+
+    public static void cancelScheduledReminder(@NonNull Context context, int taimId, int careTypeId) {
+        Context appContext = context.getApplicationContext();
+        try {
+            Intent alarmIntent = new Intent(appContext, CareReminderAlarmReceiver.class)
+                    .putExtra("taim_id", taimId)
+                    .putExtra("hooldus_type_id", careTypeId);
+            android.app.PendingIntent alarmPi = android.app.PendingIntent.getBroadcast(
+                    appContext,
+                    getAlarmRequestCode(taimId, careTypeId),
+                    alarmIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
+            );
+            android.app.AlarmManager alarmManager = appContext.getSystemService(android.app.AlarmManager.class);
+            if (alarmManager != null) {
+                alarmManager.cancel(alarmPi);
+            }
+        } catch (Exception ex) {
+            Log.w(TAG, "Failed to cancel alarm for taimId=" + taimId + " careTypeId=" + careTypeId, ex);
+        }
+
+        try {
+            WorkManager.getInstance(appContext).cancelUniqueWork(getWorkName(taimId, careTypeId));
+        } catch (Exception ex) {
+            Log.w(TAG, "Failed to cancel worker for taimId=" + taimId + " careTypeId=" + careTypeId, ex);
+        }
+    }
     public static void syncUpcomingReminders(@NonNull Context context, @NonNull PlantasticDatabase db) {
         Context appContext = context.getApplicationContext();
         new Thread(() -> {

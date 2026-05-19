@@ -35,29 +35,33 @@ public class CareNotificationWorker extends Worker {
             long now = System.currentTimeMillis();
             int inputPlantId = getInputData().getInt("taim_id", -1);
             int inputCareTypeId = getInputData().getInt("hooldus_type_id", -1);
+            long scheduledAeg = getInputData().getLong("scheduled_aeg", -1L);
+
+            // Diagnostic log: dump input payload and current time so we can trace WorkManager deliveries
+            Log.d(TAG, "doWork start: now=" + now + " inputPlantId=" + inputPlantId + " inputCareTypeId=" + inputCareTypeId + " scheduledAeg=" + scheduledAeg);
 
             if (inputPlantId != -1 && inputCareTypeId != -1) {
                 Teade teade = db.teadeDao().getByTaimAndType(inputPlantId, inputCareTypeId);
                 if (teade != null) {
-                    long allowedTriggerAt = CareReminderScheduler.adjustToAllowedNotificationTime(getApplicationContext(), teade.aeg);
-                    if (allowedTriggerAt > now) {
-                        int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
+                    int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : inputCareTypeId;
+
+                    if (scheduledAeg > now) {
                         CareReminderScheduler.scheduleReminder(
                                 getApplicationContext(),
                                 teade.taim_id,
                                 typeId,
-                                allowedTriggerAt
+                                scheduledAeg
                         );
-                        Log.d(TAG, "Reminder deferred into allowed window taimId=" + teade.taim_id
+                        Log.d(TAG, "Reminder still pending (rescheduled) taimId=" + teade.taim_id
                                 + " careTypeId=" + typeId
-                                + " allowedTriggerAt=" + allowedTriggerAt);
+                                + " scheduledAeg=" + scheduledAeg
+                                + " now=" + now);
                         return Result.success();
                     }
 
                     Taim taim = db.taimDao().getById(teade.taim_id);
                     String careType = getCareTypeName(db, teade.hooldusTüüp_id);
                     if (taim != null) {
-                        int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
                         CareNotificationManager.showCareNotification(
                                 getApplicationContext(),
                                 taim.id,
@@ -65,9 +69,10 @@ public class CareNotificationWorker extends Worker {
                                 taim.nimi,
                                 careType
                         );
+                        CareReminderScheduler.cancelScheduledReminder(getApplicationContext(), teade.taim_id, typeId);
                         Log.d(TAG, "Notification sent for scheduled work: " + taim.nimi
-                                + " triggerAt=" + teade.aeg
-                                + " allowedTriggerAt=" + allowedTriggerAt);
+                                + " originalTriggerAt=" + teade.aeg
+                                + " scheduledAeg=" + scheduledAeg);
                     }
                 }
                 return Result.success();
@@ -83,6 +88,7 @@ public class CareNotificationWorker extends Worker {
                     // Only send one notification per plant to avoid spam
                     long allowedTriggerAt = CareReminderScheduler.adjustToAllowedNotificationTime(getApplicationContext(), teade.aeg);
                     if (allowedTriggerAt > now) {
+                        Log.d(TAG, "Deferring teade for taimId=" + teade.taim_id + " allowedTriggerAt=" + allowedTriggerAt + " now=" + now);
                         CareReminderScheduler.scheduleReminder(
                                 getApplicationContext(),
                                 teade.taim_id,
@@ -95,16 +101,17 @@ public class CareNotificationWorker extends Worker {
                     if (!sentPlantIds.contains(teade.taim_id) && teade.aeg <= now) {
                         Taim taim = db.taimDao().getById(teade.taim_id);
                         String careType = getCareTypeName(db, teade.hooldusTüüp_id);
-                        
-                            if (taim != null) {
-                                int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
-                                CareNotificationManager.showCareNotification(
-                                        getApplicationContext(),
-                                        taim.id,
-                                        typeId,
-                                        taim.nimi,
-                                        careType
-                                );
+
+                        if (taim != null) {
+                            int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
+                            CareNotificationManager.showCareNotification(
+                                    getApplicationContext(),
+                                    taim.id,
+                                    typeId,
+                                    taim.nimi,
+                                    careType
+                            );
+                            CareReminderScheduler.cancelScheduledReminder(getApplicationContext(), teade.taim_id, typeId);
                             sentPlantIds.add(teade.taim_id);
                             Log.d(TAG, "Notification sent for plant: " + taim.nimi
                                     + " triggerAt=" + teade.aeg
