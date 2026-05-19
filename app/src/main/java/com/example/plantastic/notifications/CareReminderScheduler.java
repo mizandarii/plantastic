@@ -10,8 +10,10 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.plantastic.data.PlantasticDatabase;
+import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.data.entities.Teade;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -42,9 +44,75 @@ public final class CareReminderScheduler {
         }
     }
 
+    private static long normalizeMinutes(long rawValue, long fallback) {
+        long minutes = rawValue;
+        if (minutes < 0) {
+            return fallback;
+        }
+
+        if (minutes > 24 * 60 - 1) {
+            if (minutes > 24L * 60L * 60L) {
+                minutes = minutes / 60000L;
+            } else {
+                minutes = minutes / 60L;
+            }
+        }
+
+        return minutes % (24 * 60);
+    }
+
+    public static long adjustToAllowedNotificationTime(@NonNull Context context, long candidateMillis) {
+        try {
+            Context appContext = context.getApplicationContext();
+            PlantasticDatabase db = PlantasticDatabase.getInstance(appContext);
+            Kasutaja user = db.kasutajaDao().getFirstUser();
+            if (user == null || !user.teade_on) {
+                return candidateMillis;
+            }
+
+            long startMinutes = normalizeMinutes(user.teade_start, 8 * 60L);
+            long endMinutes = normalizeMinutes(user.teade_aeg, 22 * 60L);
+            if (startMinutes == endMinutes) {
+                return candidateMillis;
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(candidateMillis);
+            int candidateMinutes = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+
+            boolean wrapsMidnight = startMinutes > endMinutes;
+            boolean withinWindow = wrapsMidnight
+                    ? candidateMinutes >= startMinutes || candidateMinutes <= endMinutes
+                    : candidateMinutes >= startMinutes && candidateMinutes <= endMinutes;
+            if (withinWindow) {
+                return candidateMillis;
+            }
+
+            int adjustedDayOffset = 0;
+            if (!wrapsMidnight) {
+                if (candidateMinutes > endMinutes) {
+                    adjustedDayOffset = 1;
+                }
+            }
+
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.set(Calendar.HOUR_OF_DAY, (int) (startMinutes / 60L));
+            cal.set(Calendar.MINUTE, (int) (startMinutes % 60L));
+            if (adjustedDayOffset > 0) {
+                cal.add(Calendar.DAY_OF_YEAR, adjustedDayOffset);
+            }
+            return cal.getTimeInMillis();
+        } catch (Exception ex) {
+            Log.w(TAG, "Failed to adjust notification time; using original candidate", ex);
+            return candidateMillis;
+        }
+    }
+
     public static void scheduleReminder(@NonNull Context context, int taimId, int careTypeId, long triggerAtMillis) {
         Context appContext = context.getApplicationContext();
-        long delay = Math.max(0L, triggerAtMillis - System.currentTimeMillis());
+        long adjustedTriggerAtMillis = adjustToAllowedNotificationTime(appContext, triggerAtMillis);
+        long delay = Math.max(0L, adjustedTriggerAtMillis - System.currentTimeMillis());
 
         Data input = new Data.Builder()
                 .putInt("taim_id", taimId)
@@ -63,7 +131,10 @@ public final class CareReminderScheduler {
                 work
         );
 
-        Log.d(TAG, "Scheduled reminder taimId=" + taimId + " careTypeId=" + careTypeId + " delayMs=" + delay);
+        Log.d(TAG, "Scheduled reminder taimId=" + taimId + " careTypeId=" + careTypeId
+                + " requestedAt=" + triggerAtMillis
+                + " adjustedAt=" + adjustedTriggerAtMillis
+                + " delayMs=" + delay);
     }
 
     public static void syncUpcomingReminders(@NonNull Context context, @NonNull PlantasticDatabase db) {

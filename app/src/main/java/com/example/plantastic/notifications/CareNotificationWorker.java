@@ -39,13 +39,18 @@ public class CareNotificationWorker extends Worker {
             if (inputPlantId != -1 && inputCareTypeId != -1) {
                 Teade teade = db.teadeDao().getByTaimAndType(inputPlantId, inputCareTypeId);
                 if (teade != null) {
-                    if (teade.aeg > now) {
+                    long allowedTriggerAt = CareReminderScheduler.adjustToAllowedNotificationTime(getApplicationContext(), teade.aeg);
+                    if (allowedTriggerAt > now) {
+                        int typeId = teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1;
                         CareReminderScheduler.scheduleReminder(
                                 getApplicationContext(),
                                 teade.taim_id,
-                                teade.hooldusTüüp_id,
-                                teade.aeg
+                                typeId,
+                                allowedTriggerAt
                         );
+                        Log.d(TAG, "Reminder deferred into allowed window taimId=" + teade.taim_id
+                                + " careTypeId=" + typeId
+                                + " allowedTriggerAt=" + allowedTriggerAt);
                         return Result.success();
                     }
 
@@ -60,7 +65,9 @@ public class CareNotificationWorker extends Worker {
                                 taim.nimi,
                                 careType
                         );
-                        Log.d(TAG, "Notification sent for scheduled work: " + taim.nimi);
+                        Log.d(TAG, "Notification sent for scheduled work: " + taim.nimi
+                                + " triggerAt=" + teade.aeg
+                                + " allowedTriggerAt=" + allowedTriggerAt);
                     }
                 }
                 return Result.success();
@@ -74,6 +81,17 @@ public class CareNotificationWorker extends Worker {
             if (dueNotifications != null) {
                 for (Teade teade : dueNotifications) {
                     // Only send one notification per plant to avoid spam
+                    long allowedTriggerAt = CareReminderScheduler.adjustToAllowedNotificationTime(getApplicationContext(), teade.aeg);
+                    if (allowedTriggerAt > now) {
+                        CareReminderScheduler.scheduleReminder(
+                                getApplicationContext(),
+                                teade.taim_id,
+                                teade.hooldusTüüp_id != null ? teade.hooldusTüüp_id : 1,
+                                allowedTriggerAt
+                        );
+                        continue;
+                    }
+
                     if (!sentPlantIds.contains(teade.taim_id) && teade.aeg <= now) {
                         Taim taim = db.taimDao().getById(teade.taim_id);
                         String careType = getCareTypeName(db, teade.hooldusTüüp_id);
@@ -88,7 +106,9 @@ public class CareNotificationWorker extends Worker {
                                         careType
                                 );
                             sentPlantIds.add(teade.taim_id);
-                            Log.d(TAG, "Notification sent for plant: " + taim.nimi);
+                            Log.d(TAG, "Notification sent for plant: " + taim.nimi
+                                    + " triggerAt=" + teade.aeg
+                                    + " allowedTriggerAt=" + allowedTriggerAt);
                         }
                     }
                 }

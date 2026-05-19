@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.notifications.CareNotificationManager;
+import com.example.plantastic.notifications.CareReminderScheduler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -121,6 +122,8 @@ public class SettingsFragment extends Fragment {
             db.kasutajaDao().update(currentUser);
             if (!currentUser.teade_on) {
                 CareNotificationManager.cancelAllCareNotifications(appContext);
+            } else {
+                CareReminderScheduler.syncUpcomingReminders(appContext, db);
             }
         });
     }

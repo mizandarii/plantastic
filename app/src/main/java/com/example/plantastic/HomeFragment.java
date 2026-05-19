@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.plantastic.data.PlantasticDatabase;
+import com.example.plantastic.data.entities.TaimWithDetails;
 import com.example.plantastic.data.entities.Teade;
 import com.example.plantastic.notifications.CareActionHandler;
 import com.example.plantastic.notifications.CareReminderScheduler;
@@ -22,8 +23,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,13 +56,9 @@ public class HomeFragment extends Fragment {
         sectionToday = view.findViewById(R.id.sectionToday);
         sectionNext7Days = view.findViewById(R.id.sectionNext7Days);
         sectionLater = view.findViewById(R.id.sectionLater);
-        // Runtime-safe lookup for these container IDs (works even if generated R is inconsistent)
-        int containerTodayId = view.getResources().getIdentifier("containerToday", "id", requireContext().getPackageName());
-        int containerNext7DaysId = view.getResources().getIdentifier("containerNext7Days", "id", requireContext().getPackageName());
-        int containerLaterId = view.getResources().getIdentifier("containerLater", "id", requireContext().getPackageName());
-        containerToday = containerTodayId != 0 ? view.findViewById(containerTodayId) : null;
-        containerNext7Days = containerNext7DaysId != 0 ? view.findViewById(containerNext7DaysId) : null;
-        containerLater = containerLaterId != 0 ? view.findViewById(containerLaterId) : null;
+        containerToday = view.findViewById(R.id.containerToday);
+        containerNext7Days = view.findViewById(R.id.containerNext7Days);
+        containerLater = view.findViewById(R.id.containerLater);
         emptyText = view.findViewById(R.id.emptyText);
         headerToday = view.findViewById(R.id.headerToday);
         headerWeek = view.findViewById(R.id.headerWeek);
@@ -152,7 +153,9 @@ public class HomeFragment extends Fragment {
     @Override
     public void onStop() {
         try {
-            getActivity().unregisterReceiver(remindersUpdatedReceiver);
+            if (getActivity() != null) {
+                getActivity().unregisterReceiver(remindersUpdatedReceiver);
+            }
         } catch (Exception ignore) {}
         super.onStop();
     }
@@ -171,9 +174,37 @@ public class HomeFragment extends Fragment {
                 List<Teade> today = new ArrayList<>();
                 List<Teade> next7days = new ArrayList<>();
                 List<Teade> later = new ArrayList<>();
+                Map<Integer, TaimWithDetails> plantDetailsById = new HashMap<>();
+                Map<Integer, String> careTypeNamesById = new HashMap<>();
 
                 if (upcoming != null) {
+                    Set<Integer> fetchedPlantIds = new HashSet<>();
+                    Set<Integer> fetchedCareTypeIds = new HashSet<>();
                     for (Teade teade : upcoming) {
+                        if (teade == null) {
+                            continue;
+                        }
+                        if (teade != null && fetchedPlantIds.add(teade.taim_id)) {
+                            try {
+                                plantDetailsById.put(teade.taim_id, db.taimDao().getWithDetailsById(teade.taim_id));
+                            } catch (Exception ignore) {
+                                plantDetailsById.put(teade.taim_id, null);
+                            }
+                        }
+
+                        if (teade.hooldusTüüp_id != null && fetchedCareTypeIds.add(teade.hooldusTüüp_id)) {
+                            try {
+                                com.example.plantastic.data.entities.HooldusTüüp type = db.hooldusTüüpDao().getById(teade.hooldusTüüp_id);
+                                if (type != null && type.nimetus != null && !type.nimetus.trim().isEmpty()) {
+                                    careTypeNamesById.put(teade.hooldusTüüp_id, type.nimetus);
+                                } else {
+                                    careTypeNamesById.put(teade.hooldusTüüp_id, "Kastmine");
+                                }
+                            } catch (Exception ignore) {
+                                careTypeNamesById.put(teade.hooldusTüüp_id, "Kastmine");
+                            }
+                        }
+
                         if (teade.aeg <= today_end) {
                             today.add(teade);
                         } else if (teade.aeg <= next7days_end) {
@@ -197,19 +228,19 @@ public class HomeFragment extends Fragment {
                         
                         if (!today.isEmpty()) {
                             sectionToday.setVisibility(View.VISIBLE);
-                            populateContainer(containerToday, today);
+                            populateContainer(containerToday, today, plantDetailsById, careTypeNamesById);
                             hasAny = true;
                         }
 
                         if (!next7days.isEmpty()) {
                             sectionNext7Days.setVisibility(View.VISIBLE);
-                            populateContainer(containerNext7Days, next7days);
+                            populateContainer(containerNext7Days, next7days, plantDetailsById, careTypeNamesById);
                             hasAny = true;
                         }
 
                         if (!later.isEmpty()) {
                             sectionLater.setVisibility(View.VISIBLE);
-                            populateContainer(containerLater, later);
+                            populateContainer(containerLater, later, plantDetailsById, careTypeNamesById);
                             hasAny = true;
                         }
 
@@ -222,18 +253,21 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void populateContainer(LinearLayout container, List<Teade> teades) {
+    private void populateContainer(LinearLayout container, List<Teade> teades, Map<Integer, TaimWithDetails> plantDetailsById, Map<Integer, String> careTypeNamesById) {
         container.removeAllViews();
         
         for (Teade teade : teades) {
-            View card = createCareCard(teade);
+            View card = createCareCard(teade,
+                    plantDetailsById != null ? plantDetailsById.get(teade.taim_id) : null,
+                    careTypeNamesById != null ? careTypeNamesById.get(teade.hooldusTüüp_id) : null,
+                    container);
             container.addView(card);
         }
     }
 
-    private View createCareCard(Teade teade) {
+    private View createCareCard(Teade teade, TaimWithDetails twd, String careTypeName, ViewGroup parent) {
         // Inflate reusable plant card and adapt for notification usage
-        View card = getLayoutInflater().inflate(R.layout.my_plant_card, null);
+        View card = getLayoutInflater().inflate(R.layout.my_plant_card, parent, false);
 
         // Add extra margin for Home spacing (convert dp to px)
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -256,40 +290,19 @@ public class HomeFragment extends Fragment {
         android.widget.ImageView del = card.findViewById(R.id.delete);
         android.widget.ImageView drop = card.findViewById(R.id.drop);
 
-        // Fetch plant details (entity + sort + photos)
-        com.example.plantastic.data.entities.TaimWithDetails twd = null;
-        try {
-            twd = db.taimDao().getWithDetailsById(teade.taim_id);
-        } catch (Exception ignore) {
-        }
-
-        // Fill nickname: prefer user-given name, fall back to helper lookup, otherwise empty string
-        String nickText = "";
-        try {
-            if (twd != null && twd.taim != null && twd.taim.nimi != null && !twd.taim.nimi.trim().isEmpty()) {
-                nickText = twd.taim.nimi;
-            } else {
-                String alt = getPlantNameForTeade(teade);
-                if (alt != null) nickText = alt;
-            }
-        } catch (Exception ignored) {}
-        nickname.setText(nickText != null ? nickText : "");
+        String nickText = resolvePlantDisplayName(twd, teade);
+        nickname.setText(nickText);
         nickname.setVisibility(View.VISIBLE);
 
-        // Fill common/species name if available
-        String commonText = "";
-        if (twd != null && twd.sort != null && twd.sort.nimetus != null) {
-            commonText = twd.sort.nimetus;
-        }
-        common.setText(commonText != null ? commonText : "");
-        common.setVisibility(View.VISIBLE);
+        // The home notification card should only show the plant's image and name.
+        common.setVisibility(View.GONE);
 
         // Load plant image if available, otherwise show default icon
         boolean loadedImage = false;
         if (twd != null && twd.fotos != null && !twd.fotos.isEmpty()) {
             try {
                 String fotoPath = twd.fotos.get(0).foto;
-                if (fotoPath != null && !fotoPath.trim().isEmpty()) {
+                if (!fotoPath.trim().isEmpty()) {
                     com.bumptech.glide.Glide.with(card.getContext())
                             .load(fotoPath)
                             .centerCrop()
@@ -307,9 +320,9 @@ public class HomeFragment extends Fragment {
         }
 
         // Show care type and date
-        String careType = getCareTypeName(teade.hooldusTüüp_id);
+        String careType = careTypeName != null && !careTypeName.trim().isEmpty() ? careTypeName : "Kastmine";
         String dateStr = new SimpleDateFormat("MMM dd, HH:mm:ss", Locale.getDefault()).format(new Date(teade.aeg));
-        careTypeTv.setText(careType + " - " + dateStr);
+        careTypeTv.setText(String.format(Locale.getDefault(), "%s - %s", careType, dateStr));
         careTypeTv.setVisibility(View.VISIBLE);
 
         // Hide edit/delete icons for notification presentation
@@ -354,39 +367,16 @@ public class HomeFragment extends Fragment {
         return card;
     }
 
-    private long getIntervalMillisFromWateringIntensity(int intensity) {
-        return CareReminderScheduler.getIntervalMillisFromWateringIntensity(intensity);
-    }
-
-    private String getPlantNameForTeade(Teade teade) {
-        try {
-            com.example.plantastic.data.entities.TaimWithDetails twd = db.taimDao().getWithDetailsById(teade.taim_id);
-            if (twd != null) {
-                if (twd.taim != null && twd.taim.nimi != null && !twd.taim.nimi.trim().isEmpty()) {
-                    return twd.taim.nimi;
-                }
-                if (twd.sort != null && twd.sort.nimetus != null && !twd.sort.nimetus.trim().isEmpty()) {
-                    return twd.sort.nimetus;
-                }
+    private String resolvePlantDisplayName(TaimWithDetails twd, Teade teade) {
+        if (twd != null) {
+            if (twd.taim != null && twd.taim.nimi != null && !twd.taim.nimi.trim().isEmpty()) {
+                return twd.taim.nimi;
             }
-            com.example.plantastic.data.entities.Taim taim = db.taimDao().getById(teade.taim_id);
-            if (taim != null && taim.nimi != null && !taim.nimi.trim().isEmpty()) {
-                return taim.nimi;
+            if (twd.sort != null && twd.sort.nimetus != null && !twd.sort.nimetus.trim().isEmpty()) {
+                return twd.sort.nimetus;
             }
-            return null;
-        } catch (Exception e) {
-            return null;
         }
-    }
-
-    private String getCareTypeName(Integer typeId) {
-        if (typeId == null) return "Kastmine";
-        try {
-            com.example.plantastic.data.entities.HooldusTüüp type = db.hooldusTüüpDao().getById(typeId);
-            return type != null && type.nimetus != null ? type.nimetus : "Kastmine";
-        } catch (Exception e) {
-            return "Kastmine";
-        }
+        return String.format(Locale.getDefault(), "Taim #%d", teade.taim_id);
     }
 
     private long getEndOfDay(long timestamp) {
@@ -404,12 +394,10 @@ public class HomeFragment extends Fragment {
         args.putInt("plantId", plantId);
         MyPlantFragment fragment = new MyPlantFragment();
         fragment.setArguments(args);
-        
-        if (getParentFragmentManager() != null) {
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.frame_layout, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        }
+
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.frame_layout, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }
