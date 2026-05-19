@@ -12,13 +12,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.plantastic.data.PlantasticDatabase;
 import com.example.plantastic.data.entities.HooldusAjalugu;
 import com.example.plantastic.data.entities.HooldusTüüp;
-import com.example.plantastic.data.entities.Kasutaja;
 import com.example.plantastic.data.entities.TaimWithDetails;
 import com.example.plantastic.data.entities.Teade;
 
@@ -65,17 +65,18 @@ public class PlantsFragment extends Fragment implements MyPlantAdapter.OnPlantAc
         loadMyPlants();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadMyPlants();
+    }
+
     private void loadMyPlants() {
         executorService.execute(() -> {
-            // For demo purposes, we get the first user. 
-            // In a real app, you'd have the logged-in user's ID.
-            Kasutaja user = db.kasutajaDao().getFirstUser();
-            if (user != null) {
-                List<TaimWithDetails> myPlants = db.taimDao().getWithDetailsByUserId(user.id);
-                
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> adapter.setPlants(myPlants));
-                }
+            List<TaimWithDetails> myPlants = db.taimDao().getAllWithDetails();
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> adapter.setPlants(myPlants));
             }
         });
     }

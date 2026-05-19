@@ -37,6 +37,10 @@ public interface TaimDao {
     @Query("SELECT * FROM taim WHERE id = :id")
     TaimWithDetails getWithDetailsById(int id);
 
+    @Transaction
+    @Query("SELECT * FROM taim ORDER BY id DESC")
+    List<TaimWithDetails> getAllWithDetails();
+
     @Query("SELECT * FROM taim")
     List <Taim> getAll();
 }
